@@ -1,0 +1,10 @@
+{
+  "proxies": {
+    "files": {
+      "matchCondition": {
+        "route": "/static/{*path}"
+      },
+      "backendUri": "https://localhost:7071/api/StaticFileServer?file={path}"
+    }
+  }
+}

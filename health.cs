@@ -12,12 +12,20 @@ namespace FamilyBoardInteractive
 {
     public static class health
     {
-        [FunctionName("health")]
+        [FunctionName("Health")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
             ILogger log)
         {
-            return (ActionResult)new OkObjectResult($"It's alive");
+            var serviceInfo = new
+            {
+                home = Environment.GetEnvironmentVariable("HOME", EnvironmentVariableTarget.Process),
+                webSiteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME", EnvironmentVariableTarget.Process),
+                appRoot = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase),
+                staticFilesRoot = Util.GetApplicationRoot()
+            };
+
+            return (ActionResult)new OkObjectResult(serviceInfo);
         }
     }
 }
