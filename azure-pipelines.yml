@@ -9,6 +9,11 @@ variables:
   netCoreSdk: '2.2.202'
 
 steps:
+- script: |
+    rm -f proxies.json
+    mv proxies.server.json proxies.json
+  displayName: activate proxies.json server version
+
 - task: DotNetCoreInstaller@0
   inputs:
     packageType: 'sdk'
@@ -30,9 +35,7 @@ steps:
   displayName: 'dotnet publish'
   inputs:
     command: publish
-    publishWebProjects: True
     arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-    zipAfterPublish: True    
 
 - task: PublishBuildArtifacts@1
   inputs:
