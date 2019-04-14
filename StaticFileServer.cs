@@ -21,7 +21,7 @@ namespace FamilyBoardInteractive
     /// </summary>
     public static class StaticFileServer
     {
-        const string staticFilesFolder = "www";
+        const string staticFilesFolder = "wwwroot";
         static string defaultPage =
             string.IsNullOrEmpty(Util.GetEnvironmentVariable("DEFAULT_PAGE")) ?
             "index.html" : Util.GetEnvironmentVariable("DEFAULT_PAGE");
