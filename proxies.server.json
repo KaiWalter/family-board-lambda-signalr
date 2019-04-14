@@ -2,7 +2,7 @@
   "proxies": {
     "files": {
       "matchCondition": {
-        "route": "{*path}"
+        "route": "/static/{*path}"
       },
       "backendUri": "https://%WEBSITE_SITE_NAME%.azurewebsites.net/api/StaticFileServer?file={path}"
     }
