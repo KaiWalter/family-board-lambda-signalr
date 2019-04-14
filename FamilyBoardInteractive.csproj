@@ -4,16 +4,16 @@
     <AzureFunctionsVersion>V2</AzureFunctionsVersion>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="www\css\board.css" />
-    <None Remove="www\index.html" />
+    <None Remove="wwwroot\css\board.css" />
+    <None Remove="wwwroot\index.html" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="www\css\board.css">
+    <Content Include="wwwroot\css\board.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="www\index.html">
+    <Content Include="wwwroot\index.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
