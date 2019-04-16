@@ -5,6 +5,12 @@
         "route": "/static/{*path}"
       },
       "backendUri": "https://localhost:7071/api/StaticFileServer?file={path}"
+    },
+    "favicon": {
+      "matchCondition": {
+        "route": "/favicon.ico"
+      },
+      "backendUri": "https://localhost:7071/api/StaticFileServer?file=favicon.ico"
     }
   }
 }

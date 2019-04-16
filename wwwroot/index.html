@@ -9,69 +9,9 @@
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"
         integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 
-    <style>
-        html,
-        body {
-            background-color: black;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: white;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
+    <script src="/static/lib/signalr/signalr.js"></script>
 
-        .board {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            grid-template-rows: auto;
-            height: 100vh;
-        }
-
-        .image {
-            height: 100%;
-        }
-
-        .calendar {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            grid-template-rows: 60px repeat(3, 1fr);
-        }
-
-        .weekday {
-            text-align: center;
-            font-size: 2em;
-        }
-
-        .day {
-            font-size: 1em;
-        }
-
-        .today {
-            font-size: 1em;
-            background-color: dimgray;
-        }
-
-        .day_number {
-            font-size: x-large;
-            line-height: 1em;
-        }
-
-        .event_summary {
-            font-size: medium;
-            line-height: 1em;
-        }
-
-        .all_day {
-            background-color: white;
-            color: black;
-            font-size: medium;
-            line-height: 2em;
-        }
-
-        #dayHeader {
-            text-align: center;
-            font-size: 2em;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="/static/css/board.css" />
 </head>
 
 <body>
@@ -173,6 +113,22 @@
         }
 
         $(document).ready(function () {
+
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/api")
+                .configureLogging(signalR.LogLevel.Information)
+                .build();
+
+            connection.start().then(function () {
+                console.log("connected");
+            });
+
+            connection.on('newMessage', newMessage);
+            connection.onclose(() => console.log('disconnected'));
+            function newMessage(message) {
+                console.log(message);
+                $("#x").html(message.Text);
+            }
 
             // find first day of week
             let current = currentDate();
