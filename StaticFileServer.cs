@@ -53,8 +53,8 @@ namespace FamilyBoardInteractive
             {
                 var filePath = GetFilePath(req, logger);
 
-                // do not offer default page / index.html unprotected
-                if(filePath.ToLower() == defaultPage)
+                // do not offer index.html unprotected
+                if(filePath.ToLower().EndsWith("index.html"))
                 {
                     return new HttpResponseMessage(HttpStatusCode.NotFound);
                 }
