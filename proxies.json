@@ -1,5 +1,11 @@
 {
   "proxies": {
+    "protectedfiles": {
+      "matchCondition": {
+        "route": "/index.html"
+      },
+      "backendUri": "https://localhost:7071/api/ProtectedStaticFileServer?file=index.html"
+    },
     "files": {
       "matchCondition": {
         "route": "/static/{*path}"

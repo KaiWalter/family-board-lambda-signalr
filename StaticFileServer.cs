@@ -26,8 +26,8 @@ namespace FamilyBoardInteractive
             string.IsNullOrEmpty(Util.GetEnvironmentVariable("DEFAULT_PAGE")) ?
             "index.html" : Util.GetEnvironmentVariable("DEFAULT_PAGE");
 
-        [FunctionName("StaticFileServer")]
-        public static HttpResponseMessage Run(
+        [FunctionName("ProtectedStaticFileServer")]
+        public static HttpResponseMessage Protected(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req,
             ILogger logger)
         {
@@ -35,17 +35,47 @@ namespace FamilyBoardInteractive
             {
                 var filePath = GetFilePath(req, logger);
 
-                var response = new HttpResponseMessage(HttpStatusCode.OK);
-                var stream = new FileStream(filePath, FileMode.Open);
-                response.Content = new StreamContent(stream);
-                response.Content.Headers.ContentType =
-                    new MediaTypeHeaderValue(GetMimeType(filePath));
+                HttpResponseMessage response = ServeFile(filePath, logger);
                 return response;
             }
             catch
             {
                 return new HttpResponseMessage(HttpStatusCode.NotFound);
             }
+        }
+
+        [FunctionName("StaticFileServer")]
+        public static HttpResponseMessage Unprotected(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)]HttpRequest req,
+            ILogger logger)
+        {
+            try
+            {
+                var filePath = GetFilePath(req, logger);
+
+                // do not offer default page / index.html unprotected
+                if(filePath.ToLower() == defaultPage)
+                {
+                    return new HttpResponseMessage(HttpStatusCode.NotFound);
+                }
+
+                HttpResponseMessage response = ServeFile(filePath, logger);
+                return response;
+            }
+            catch
+            {
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            }
+        }
+
+        private static HttpResponseMessage ServeFile(string filePath, ILogger logger)
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.OK);
+            var stream = new FileStream(filePath, FileMode.Open);
+            response.Content = new StreamContent(stream);
+            response.Content.Headers.ContentType =
+                new MediaTypeHeaderValue(GetMimeType(filePath));
+            return response;
         }
 
         private static string GetFilePath(HttpRequest req, ILogger logger)

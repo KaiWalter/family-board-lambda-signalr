@@ -1,5 +1,11 @@
 {
   "proxies": {
+    "protectedfiles": {
+      "matchCondition": {
+        "route": "/index.html"
+      },
+      "backendUri": "https://%WEBSITE_SITE_NAME%.azurewebsites.net/api/ProtectedStaticFileServer?file=index.html"
+    },
     "files": {
       "matchCondition": {
         "route": "/static/{*path}"
