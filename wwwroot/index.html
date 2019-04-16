@@ -195,37 +195,37 @@
             // query and fill day values
             let iDate = currentDate();
 
-            $.get("http://localhost:8080/calendar?startDate=" + startDateFormatted + "&endDate=" + endDateFormatted, function (data) {
-                for (i = 0; i < 21; i++) {
-                    iDate.setDate(firstDate.getDate() + i);
-                    let content = "<p class='day_number'>" + iDate.getDate() + "</p>";;
+            //$.get("http://localhost:8080/calendar?startDate=" + startDateFormatted + "&endDate=" + endDateFormatted, function (data) {
+            //    for (i = 0; i < 21; i++) {
+            //        iDate.setDate(firstDate.getDate() + i);
+            //        let content = "<p class='day_number'>" + iDate.getDate() + "</p>";;
 
-                    let iDateFormatted = iDate.toISOString().split('T')[0];
+            //        let iDateFormatted = iDate.toISOString().split('T')[0];
 
-                    // render all day events always on top
-                    data.forEach((entry) => {
-                        if (iDateFormatted >= entry.start.date &&
-                            iDateFormatted < entry.end.date) {
-                            content += "<p class='all_day'>" + entry.summary + "</p>";
-                        }
-                    });
+            //        // render all day events always on top
+            //        data.forEach((entry) => {
+            //            if (iDateFormatted >= entry.start.date &&
+            //                iDateFormatted < entry.end.date) {
+            //                content += "<p class='all_day'>" + entry.summary + "</p>";
+            //            }
+            //        });
 
-                    // render other events
-                    data.forEach((entry) => {
-                        if (entry.start.dateTime > iDateFormatted + 'T00:00:00+02:00' &&
-                            entry.end.dateTime <= iDateFormatted + 'T23:59:59+02:00') {
-                            startTime = entry.start.dateTime.split('T')[1].split(':00+')[0];
-                            content += "<p class='event_summary'>" + startTime + " " + entry.summary + "</p>";
-                        }
-                    });
+            //        // render other events
+            //        data.forEach((entry) => {
+            //            if (entry.start.dateTime > iDateFormatted + 'T00:00:00+02:00' &&
+            //                entry.end.dateTime <= iDateFormatted + 'T23:59:59+02:00') {
+            //                startTime = entry.start.dateTime.split('T')[1].split(':00+')[0];
+            //                content += "<p class='event_summary'>" + startTime + " " + entry.summary + "</p>";
+            //            }
+            //        });
 
-                    $("#day" + i + " > #dayHeader").html(content);
+            //        $("#day" + i + " > #dayHeader").html(content);
 
-                    if (iDate.toISOString() === current.toISOString()) {
-                        $("#day" + i).toggleClass("today");
-                    }
-                }
-            });
+            //        if (iDate.toISOString() === current.toISOString()) {
+            //            $("#day" + i).toggleClass("today");
+            //        }
+            //    }
+            //});
 
 
         });
