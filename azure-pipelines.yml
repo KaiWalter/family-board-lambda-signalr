@@ -8,12 +8,12 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
-  netCoreSdk: '2.2.202'
+  netCoreSdk: '2.2.203'
 
 steps:
 - script: |
-    rm -f proxies.json
-    mv proxies.server.json proxies.json
+    del FamilyBoardInteractive\proxies.json /q
+    ren FamilyBoardInteractive\proxies.server.json FamilyBoardInteractive\proxies.json
   displayName: activate proxies.json server version
 
 - task: DotNetCoreInstaller@0
