@@ -1,6 +1,7 @@
 trigger:
 - master
 - feature/*
+- bug/*
 
 pool:
   vmImage: 'windows-2019'
