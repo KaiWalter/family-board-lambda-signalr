@@ -67,15 +67,7 @@ namespace FamilyBoardInteractive.Services
             {
                 foreach (var eventItem in events.Items)
                 {
-                    var eventResult = new Models.CalendarEntry()
-                    {
-                        Date = eventItem.Start.DateTime.ToString(),
-                        Description = eventItem.Description
-                    };
-                    if (String.IsNullOrEmpty(eventResult.Date))
-                    {
-                        eventResult.Date = eventItem.Start.Date;
-                    }
+                    Models.CalendarEntry eventResult = CreateCalendarEntry(eventItem);
                     eventResults.Add(eventResult);
                 }
             }
@@ -101,15 +93,7 @@ namespace FamilyBoardInteractive.Services
             {
                 foreach (var eventItem in events.Items)
                 {
-                    var eventResult = new Models.CalendarEntry()
-                    {
-                        Date = eventItem.Start.DateTime.ToString(),
-                        Description = eventItem.Description
-                    };
-                    if (String.IsNullOrEmpty(eventResult.Date))
-                    {
-                        eventResult.Date = eventItem.Start.Date;
-                    }
+                    Models.CalendarEntry eventResult = CreateCalendarEntry(eventItem);
                     eventResults.Add(eventResult);
                 }
             }
@@ -117,6 +101,15 @@ namespace FamilyBoardInteractive.Services
             return eventResults;
         }
 
+        private static Models.CalendarEntry CreateCalendarEntry(Event eventItem)
+        {
+            var eventResult = new Models.CalendarEntry()
+            {
+                Date = eventItem.Start.Date ?? eventItem.Start.DateTime?.ToShortDateString(),
+                Description = eventItem.Summary
+            };
 
+            return eventResult;
+        }
     }
 }
