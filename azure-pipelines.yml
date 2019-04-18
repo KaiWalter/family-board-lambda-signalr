@@ -13,7 +13,7 @@ variables:
 steps:
 - script: |
     del FamilyBoardInteractive\proxies.json /q
-    ren FamilyBoardInteractive\proxies.server.json FamilyBoardInteractive\proxies.json
+    ren FamilyBoardInteractive\proxies.server.json proxies.json
   displayName: activate proxies.json server version
 
 - task: DotNetCoreInstaller@0
