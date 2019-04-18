@@ -5,7 +5,14 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="wwwroot\css\board.css" />
+    <None Remove="wwwroot\favicon.ico" />
     <None Remove="wwwroot\index.html" />
+    <None Remove="wwwroot\lib\signalr\signalr.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="wwwroot\favicon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="wwwroot\css\board.css">
@@ -16,10 +23,14 @@
     <Content Include="wwwroot\index.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="wwwroot\lib\signalr\signalr.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MediaTypeMap.Core" Version="2.3.3" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Http" Version="3.0.2" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.SignalRService" Version="1.0.0" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="1.0.26" />
   </ItemGroup>
   <ItemGroup>
