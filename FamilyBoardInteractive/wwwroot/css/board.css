@@ -9,9 +9,15 @@ body {
 
 .board {
     display: grid;
+    grid-template-columns: auto;
+    grid-template-rows: auto 30px;
+    height: 100vh;
+}
+
+.main {
+    display: grid;
     grid-template-columns: 1fr 2fr;
     grid-template-rows: auto;
-    height: 100vh;
 }
 
 .image {
@@ -57,5 +63,10 @@ body {
 
 #dayHeader {
     text-align: center;
+    font-size: 2em;
+}
+
+#dayContent {
+    text-align: left;
     font-size: 2em;
 }
