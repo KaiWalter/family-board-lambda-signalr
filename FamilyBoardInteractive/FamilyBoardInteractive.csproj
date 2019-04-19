@@ -30,7 +30,9 @@
   <ItemGroup>
     <PackageReference Include="Google.Apis.Calendar.v3" Version="1.38.2.1559" />
     <PackageReference Include="MediaTypeMap.Core" Version="2.3.3" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.AuthTokens" Version="1.0.0-beta6" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Http" Version="3.0.2" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.MicrosoftGraph" Version="1.0.0-beta6" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.SignalRService" Version="1.0.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="3.0.5" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="1.0.26" />

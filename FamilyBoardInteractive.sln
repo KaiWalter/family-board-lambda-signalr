@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.28803.156
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FamilyBoardInteractive", "FamilyBoardInteractive\FamilyBoardInteractive.csproj", "{5F3E52F7-E602-4E22-9AC3-855AA72FE67D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FamilyBoardInteractive.UnitTests", "FamilyBoardInteractive.UnitTests\FamilyBoardInteractive.UnitTests.csproj", "{DE178970-CC92-404B-9CDB-68C4C1B46AD5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FamilyBoardInteractive.UnitTests", "FamilyBoardInteractive.UnitTests\FamilyBoardInteractive.UnitTests.csproj", "{DE178970-CC92-404B-9CDB-68C4C1B46AD5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
