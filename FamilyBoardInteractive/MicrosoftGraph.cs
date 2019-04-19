@@ -16,7 +16,7 @@ namespace FamilyBoardInteractive
         [FunctionName(nameof(MicrosoftGraphToken))]
         public static IActionResult MicrosoftGraphToken(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            [Token(Resource = "https://graph.microsoft.com")]string token,
+            [Token(Resource = "https://graph.microsoft.com", Identity = TokenIdentityMode.UserFromRequest)]string token,
             ILogger log)
         {
             return (ActionResult)new OkObjectResult(token);
