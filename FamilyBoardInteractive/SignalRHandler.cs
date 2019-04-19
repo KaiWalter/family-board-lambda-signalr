@@ -12,7 +12,7 @@ namespace FamilyBoardInteractive
     {
         private const string HUBNAME = "fb";
         private const string QUEUENAME = "boardUpdates";
-        private const string SCHEDULEUPDATECALENDAR = "0 */1 * * * *";
+        private const string SCHEDULEUPDATECALENDAR = "0 */5 * * * *";
         private const string QUEUEMESSAGEUPDATECALENDER = "updateCalendar";
         private const string SIGNALRMESSAGEUPDATECALENDER = "updateCalendar";
         private const string SIGNALRMESSAGE = "newMessage";
