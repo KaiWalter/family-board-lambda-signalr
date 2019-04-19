@@ -1,14 +1,14 @@
-using System;
-using System.IO;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using System.Net.Http;
-using System.Net;
-using System.Net.Http.Headers;
 using MimeTypes;
+using System;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace FamilyBoardInteractive
 {
@@ -17,10 +17,8 @@ namespace FamilyBoardInteractive
     /// </summary>
     public static class StaticFileServer
     {
-        const string staticFilesFolder = "wwwroot";
-        static string defaultPage =
-            string.IsNullOrEmpty(Util.GetEnvironmentVariable("DEFAULT_PAGE")) ?
-            "index.html" : Util.GetEnvironmentVariable("DEFAULT_PAGE");
+        private const string StaticFilesFolder = "wwwroot";
+        private const string DefaultPage = "index.html";
 
         [FunctionName("ProtectedStaticFileServer")]
         public static HttpResponseMessage Protected(
@@ -50,7 +48,7 @@ namespace FamilyBoardInteractive
                 var filePath = GetFilePath(req, logger);
 
                 // do not offer index.html unprotected
-                if(filePath.ToLower().EndsWith("index.html"))
+                if(filePath.ToLower().EndsWith(DefaultPage))
                 {
                     return new HttpResponseMessage(HttpStatusCode.NotFound);
                 }
@@ -69,8 +67,7 @@ namespace FamilyBoardInteractive
             var response = new HttpResponseMessage(HttpStatusCode.OK);
             var stream = new FileStream(filePath, FileMode.Open);
             response.Content = new StreamContent(stream);
-            response.Content.Headers.ContentType =
-                new MediaTypeHeaderValue(GetMimeType(filePath));
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue(GetMimeType(filePath));
             return response;
         }
 
@@ -80,19 +77,12 @@ namespace FamilyBoardInteractive
 
             var path = pathValue ?? "";
 
-            var staticFilesPath =
-                Path.GetFullPath(Path.Combine(Util.GetApplicationRoot(), staticFilesFolder));
+            var staticFilesPath = Path.GetFullPath(Path.Combine(Util.GetApplicationRoot(), StaticFilesFolder));
             var fullPath = Path.GetFullPath(Path.Combine(staticFilesPath, path));
 
             if (!IsInDirectory(staticFilesPath, fullPath))
             {
                 throw new ArgumentException("Invalid path");
-            }
-
-            var isDirectory = Directory.Exists(fullPath);
-            if (isDirectory)
-            {
-                fullPath = Path.Combine(fullPath, defaultPage);
             }
 
             return fullPath;

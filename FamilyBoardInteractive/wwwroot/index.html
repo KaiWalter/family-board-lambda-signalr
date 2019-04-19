@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"
-        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 
     <script src="/static/lib/signalr/signalr.js"></script>
 
@@ -25,80 +25,67 @@
             image image image image image image image image image image image image image
         </div>
 
-        <div class="calendar">
+        <div class="main">
 
-            <div class="weekday">Mo</div>
-            <div class="weekday">Di</div>
-            <div class="weekday">Mi</div>
-            <div class="weekday">Do</div>
-            <div class="weekday">Fr</div>
-            <div class="weekday">Sa</div>
-            <div class="weekday">So</div>
+            <div class="calendar">
 
-            <div id="day0" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day1" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day2" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day3" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day4" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day5" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day6" class="day">
-                <div id="dayHeader"></div>
+                <div class="weekday">Mo</div>
+                <div class="weekday">Di</div>
+                <div class="weekday">Mi</div>
+                <div class="weekday">Do</div>
+                <div class="weekday">Fr</div>
+                <div class="weekday">Sa</div>
+                <div class="weekday">So</div>
+
+                <div id="day0" class="day">
+                </div>
+                <div id="day1" class="day">
+                </div>
+                <div id="day2" class="day">
+                </div>
+                <div id="day3" class="day">
+                </div>
+                <div id="day4" class="day">
+                </div>
+                <div id="day5" class="day">
+                </div>
+                <div id="day6" class="day">
+                </div>
+
+                <div id="day7" class="day">
+                </div>
+                <div id="day8" class="day">
+                </div>
+                <div id="day9" class="day">
+                </div>
+                <div id="day10" class="day">
+                </div>
+                <div id="day11" class="day">
+                </div>
+                <div id="day12" class="day">
+                </div>
+                <div id="day13" class="day">
+                </div>
+
+                <div id="day14" class="day">
+                </div>
+                <div id="day15" class="day">
+                </div>
+                <div id="day16" class="day">
+                </div>
+                <div id="day17" class="day">
+                </div>
+                <div id="day18" class="day">
+                </div>
+                <div id="day19" class="day">
+                </div>
+                <div id="day20" class="day">
+                </div>
+
+
             </div>
 
-            <div id="day7" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day8" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day9" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day10" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day11" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day12" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day13" class="day">
-                <div id="dayHeader"></div>
-            </div>
-
-            <div id="day14" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day15" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day16" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day17" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day18" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day19" class="day">
-                <div id="dayHeader"></div>
-            </div>
-            <div id="day20" class="day">
-                <div id="dayHeader"></div>
+            <div id="message">
             </div>
 
         </div>
@@ -124,66 +111,79 @@
             });
 
             connection.on('newMessage', newMessage);
+            connection.on('updateCalendar', updateCalendar);
+
             connection.onclose(() => console.log('disconnected'));
+
             function newMessage(message) {
                 console.log(message);
-                $("#x").html(message.Text);
+                putMessage(message.Text);
             }
 
-            // find first day of week
-            let current = currentDate();
-
-            let wd = current.getDay();
-            let firstDate = currentDate();
-            while (wd > 1) {
-                wd--;
-                firstDate.setDate(firstDate.getDate() - 1);
+            // --------------------------------------------------------------------------------
+            // put a message
+            function putMessage(message, timeoutSecs) {
+                $("#message").html(message);
+                if (timeoutSecs) {
+                    setTimeout(() => {
+                        $("#message").html("");
+                    }, timeoutSecs * 1000);
+                }
             }
 
-            // calendar boundary dates
-            let startDate = currentDate();
-            startDate.setDate(firstDate.getDate());
-            let endDate = currentDate();
-            endDate.setDate(startDate.getDate() + 21);
-            let startDateFormatted = startDate.toISOString().split('T')[0];
-            let endDateFormatted = endDate.toISOString().split('T')[0];
+            // --------------------------------------------------------------------------------
+            // update calendar
+            function updateCalendar(events) {
+                putMessage("updating calendar");
 
-            // query and fill day values
-            let iDate = currentDate();
+                // find first day of week
+                let current = currentDate();
 
-            //$.get("http://localhost:8080/calendar?startDate=" + startDateFormatted + "&endDate=" + endDateFormatted, function (data) {
-            //    for (i = 0; i < 21; i++) {
-            //        iDate.setDate(firstDate.getDate() + i);
-            //        let content = "<p class='day_number'>" + iDate.getDate() + "</p>";;
+                let wd = current.getDay();
+                let firstDate = currentDate();
+                while (wd > 1) {
+                    wd--;
+                    firstDate.setDate(firstDate.getDate() - 1);
+                }
 
-            //        let iDateFormatted = iDate.toISOString().split('T')[0];
+                // fill calendar
+                let iDate = currentDate();
 
-            //        // render all day events always on top
-            //        data.forEach((entry) => {
-            //            if (iDateFormatted >= entry.start.date &&
-            //                iDateFormatted < entry.end.date) {
-            //                content += "<p class='all_day'>" + entry.summary + "</p>";
-            //            }
-            //        });
+                for (i = 0; i < 21; i++) {
+                    iDate.setDate(firstDate.getDate() + i);
 
-            //        // render other events
-            //        data.forEach((entry) => {
-            //            if (entry.start.dateTime > iDateFormatted + 'T00:00:00+02:00' &&
-            //                entry.end.dateTime <= iDateFormatted + 'T23:59:59+02:00') {
-            //                startTime = entry.start.dateTime.split('T')[1].split(':00+')[0];
-            //                content += "<p class='event_summary'>" + startTime + " " + entry.summary + "</p>";
-            //            }
-            //        });
+                    // reset
+                    $("#day" + i).html("<div id='dayHeader'><div class='day_number'>" + iDate.getDate() + "</div></div><div id='dayContent'></div>");
+                    $("#day" + i).removeClass("today").add("day");
 
-            //        $("#day" + i + " > #dayHeader").html(content);
+                    // build cell content
+                    let content = "";
 
-            //        if (iDate.toISOString() === current.toISOString()) {
-            //            $("#day" + i).toggleClass("today");
-            //        }
-            //    }
-            //});
+                    let iDateFormatted = iDate.toISOString().split('T')[0];
 
+                    // render all day events always on top
+                    events.forEach((entry) => {
+                        if (iDateFormatted === entry.date && entry.allDayEvent) {
+                            content += "<div class='all_day'>" + entry.description + "</div>";
+                        }
+                    });
 
+                    // render timed events below
+                    events.forEach((entry) => {
+                        if (iDateFormatted === entry.date && !entry.allDayEvent) {
+                            content += "<p class='single_event'>" + entry.time + " " + entry.description + "</p>";
+                        }
+                    });
+
+                    $("#day" + i + " > #dayContent").html(content);
+
+                    if (iDate.toISOString() === current.toISOString()) {
+                        $("#day" + i).toggleClass("today");
+                    }
+                }
+
+                putMessage("calendar updated", 2);
+            }
         });
     </script>
 
