@@ -13,13 +13,23 @@ namespace FamilyBoardInteractive
 {
     public static class MicrosoftGraph
     {
-        [FunctionName(nameof(MicrosoftGraphToken))]
-        public static IActionResult MicrosoftGraphToken(
+        [FunctionName(nameof(token1))]
+        public static IActionResult token1(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            [Token(Resource = "https://graph.microsoft.com", Identity = TokenIdentityMode.UserFromRequest)]string token,
+            [Token(Resource = "https://graph.microsoft.com", Identity = TokenIdentityMode.UserFromId, UserId = "sid:4d3451ed0d1da1d0c082d33aef95f627")]string token,
             ILogger log)
         {
             return (ActionResult)new OkObjectResult(token);
         }
+
+        [FunctionName(nameof(token2))]
+        public static IActionResult token2(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
+            [Token(Resource = "https://graph.microsoft.com", Identity = TokenIdentityMode.UserFromId, UserId = "%WEBSITE_AUTH_MSA_CLIENT_ID%")]string token,
+            ILogger log)
+        {
+            return (ActionResult)new OkObjectResult(token);
+        }
+
     }
 }
