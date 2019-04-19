@@ -40,7 +40,11 @@ namespace FamilyBoardInteractive
                 webSiteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME", EnvironmentVariableTarget.Process),
                 appRoot = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase),
                 staticFilesRoot = Util.GetApplicationRoot(),
-                googleCalendarResult
+                googleCalendarResult,
+                MSA_AccessToken = req.Headers["X-MS-TOKEN-MICROSOFTACCOUNT-ACCESS-TOKEN"],
+                MSA_ExpiresOn = req.Headers["X-MS-TOKEN-MICROSOFTACCOUNT-EXPIRES-ON"],
+                MSA_AuthenticationToken = req.Headers["X-MS-TOKEN-MICROSOFTACCOUNT-AUTHENTICATION-TOKEN"],
+                MSA_RefreshToken = req.Headers["X-MS-TOKEN-MICROSOFTACCOUNT-REFRESH-TOKEN"]
             };
 
             return (ActionResult)new OkObjectResult(serviceInfo);
