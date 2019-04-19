@@ -36,7 +36,7 @@ namespace FamilyBoardInteractive
         [FunctionName(nameof(token3))]
         public static IActionResult token3(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            [Token(Resource = "https://graph.microsoft.com", Identity = TokenIdentityMode.UserFromRequest)]string token,
+            [Token(Resource = "https://graph.microsoft.com", Identity = TokenIdentityMode.UserFromToken, UserToken = "{headers.X-MS-TOKEN-MICROSOFTACCOUNT-ACCESS-TOKEN}")]string token,
             ILogger log)
         {
             log.LogInformation(token);
