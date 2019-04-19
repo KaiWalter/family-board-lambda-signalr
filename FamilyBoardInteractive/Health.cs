@@ -1,12 +1,12 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using FamilyBoardInteractive.Models;
+using FamilyBoardInteractive.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using FamilyBoardInteractive.Services;
+using System;
+using System.IO;
 
 namespace FamilyBoardInteractive
 {
@@ -15,6 +15,7 @@ namespace FamilyBoardInteractive
         [FunctionName("Health")]
         public static IActionResult Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
+            [Table("Tokens", partitionKey: "Token", rowKey: "MSA")] MSAToken msaToken,
             ILogger log)
         {
             string googleCalendarResult;
@@ -33,6 +34,8 @@ namespace FamilyBoardInteractive
                 log.LogError(ex, "GoogleCalendarService");
             }
 
+
+
             // assemble service info
             var serviceInfo = new
             {
@@ -41,10 +44,7 @@ namespace FamilyBoardInteractive
                 appRoot = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase),
                 staticFilesRoot = Util.GetApplicationRoot(),
                 googleCalendarResult,
-                MSA_AccessToken = req.Headers["X-MS-TOKEN-MICROSOFTACCOUNT-ACCESS-TOKEN"],
-                MSA_ExpiresOn = req.Headers["X-MS-TOKEN-MICROSOFTACCOUNT-EXPIRES-ON"],
-                MSA_AuthenticationToken = req.Headers["X-MS-TOKEN-MICROSOFTACCOUNT-AUTHENTICATION-TOKEN"],
-                MSA_RefreshToken = req.Headers["X-MS-TOKEN-MICROSOFTACCOUNT-REFRESH-TOKEN"]
+                msaToken
             };
 
             return (ActionResult)new OkObjectResult(serviceInfo);
