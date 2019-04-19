@@ -67,8 +67,7 @@ namespace FamilyBoardInteractive.Services
             {
                 foreach (var eventItem in events.Items)
                 {
-                    Models.CalendarEntry eventResult = CreateCalendarEntry(eventItem);
-                    eventResults.Add(eventResult);
+                    eventResults.AddRange(CreateCalendarEntries(eventItem));
                 }
             }
 
@@ -93,23 +92,47 @@ namespace FamilyBoardInteractive.Services
             {
                 foreach (var eventItem in events.Items)
                 {
-                    Models.CalendarEntry eventResult = CreateCalendarEntry(eventItem);
-                    eventResults.Add(eventResult);
+                    eventResults.AddRange(CreateCalendarEntries(eventItem));
                 }
             }
 
             return eventResults;
         }
 
-        private static Models.CalendarEntry CreateCalendarEntry(Event eventItem)
+        private static List<Models.CalendarEntry> CreateCalendarEntries(Event eventItem)
         {
-            var eventResult = new Models.CalendarEntry()
-            {
-                Date = eventItem.Start.Date ?? eventItem.Start.DateTime?.ToShortDateString(),
-                Description = eventItem.Summary
-            };
+            var results = new List<Models.CalendarEntry>();
 
-            return eventResult;
+            // for all days events generate an entry for each day
+            if (eventItem.Start.DateTime == null && eventItem.End.DateTime == null)
+            {
+                var currentDT = DateTime.Parse(eventItem.Start.Date);
+                var endDT = DateTime.Parse(eventItem.End.Date);
+                while(currentDT < endDT)
+                {
+                    var eventResult = new Models.CalendarEntry()
+                    {
+                        Date = currentDT.ToString("u").Substring(0,10),
+                        Description = eventItem.Summary,
+                        AllDayEvent = true
+                    };
+                    results.Add(eventResult);
+                    currentDT = currentDT.AddDays(1);
+                }
+            }
+            // for event on one day create one entry
+            else if(eventItem.Start.DateTimeRaw != null && !string.IsNullOrEmpty(eventItem.Start.TimeZone))
+            {
+                var eventResult = new Models.CalendarEntry()
+                {
+                    Date = eventItem.Start.DateTimeRaw.Substring(0,10),
+                    Time = eventItem.Start.DateTimeRaw.Substring(11, 5),
+                    Description = eventItem.Summary
+                };
+                results.Add(eventResult);
+            }
+
+            return results;
         }
     }
 }
