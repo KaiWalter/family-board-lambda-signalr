@@ -49,9 +49,11 @@ body {
 .day_number {
     font-size: x-large;
     line-height: 1em;
+    margin-top: 2px;
+    margin-bottom: 5px;
 }
 
-.event_summary {
+.single_event {
     font-size: medium;
     line-height: 1em;
 }
