@@ -18,6 +18,12 @@ body {
     height: 100%;
 }
 
+.main {
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-rows: auto 30px;
+}
+
 .calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -31,6 +37,8 @@ body {
 
 .day {
     font-size: 1em;
+    margin-left: 1px;
+    margin-right: 1px;
 }
 
 .today {
@@ -41,9 +49,11 @@ body {
 .day_number {
     font-size: x-large;
     line-height: 1em;
+    margin-top: 2px;
+    margin-bottom: 5px;
 }
 
-.event_summary {
+.single_event {
     font-size: medium;
     line-height: 1em;
 }
@@ -53,9 +63,16 @@ body {
     color: black;
     font-size: medium;
     line-height: 2em;
+    padding-left: 2px;
+    padding-right: 2px;
 }
 
 #dayHeader {
     text-align: center;
+    font-size: 2em;
+}
+
+#dayContent {
+    text-align: left;
     font-size: 2em;
 }
