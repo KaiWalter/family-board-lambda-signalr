@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <TestRunParameters>
+    <Parameter name="GOOGLE_CERTIFICATE_THUMBPRINT" value="7B33EC742CE954240C695429F074A22E60D8991A" />
+    <Parameter name="GOOGLE_SERVICE_ACCOUNT" value="familyboard@ksln-calendar.iam.gserviceaccount.com" />
+    <Parameter name="GOOGLE_CALENDAR_ID" value="ksln.walter@gmail.com" />
+  </TestRunParameters>
+</RunSettings>
