@@ -192,11 +192,32 @@
                 //$("#image").attr("style","background-image: url('"  + imageUri + "');").html("<img src='" + imageUri + "' />");
                 //$("#imageContainer").html("<img id='image' style='position: relative;' src='" + imageObj.path + "' />");
 
-                $("<img/>").attr("src", imageObj.path).on("load", function () {
+
+                //$("<img/>").attr("src", imageObj.path).attr("image-orientation", "from-image").on("load", function () {
+                //    $(this).remove(), $("#imageContainer").css({
+                //     background: "#000 url(" + imageDataUrl + ") center center",
+                //     backgroundSize: "cover",
+                //     backgroundRepeat: "no-repeat"
+                //    });
+                //});
+
+                $("<img/>")
+                    .attr("src", imageObj.path)
+                    .attr("image-orientation", "from-image")
+                    .attr("crossOrigin","Anonymous")
+                    .on("load", function () {
+                    var canvas = document.createElement('canvas');
+                    var ctx = canvas.getContext('2d');
+                    canvas.width = this.width;
+                    canvas.height = this.height;
+                        ctx.drawImage(this, 0, 0);
+                        ctx.rotate(90 * Math.PI / 180);
+                    var imageDataUrl = canvas.toDataURL('image/jpeg');
+
                     $(this).remove(), $("#imageContainer").css({
-                     background: "#000 url(" + imageObj.path + ") center center",
-                     backgroundSize: "cover",
-                     backgroundRepeat: "no-repeat"
+                        background: "#000 url(" + imageDataUrl + ") center center",
+                        backgroundSize: "cover",
+                        backgroundRepeat: "no-repeat"
                     });
                 });
 
