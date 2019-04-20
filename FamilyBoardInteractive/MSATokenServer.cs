@@ -50,7 +50,7 @@ namespace FamilyBoardInteractive
         [FunctionName(nameof(RefreshMSAToken))]
         [return: Table("Tokens")]
         public static async Task<MSAToken> RefreshMSAToken(
-            [QueueTrigger("refreshmsatoken")] string queueMessage,
+            [QueueTrigger(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] string queueMessage,
             [Table("Tokens", partitionKey: "Token", rowKey: "MSA")] MSAToken inputToken,
             ILogger log)
         {
@@ -91,8 +91,10 @@ namespace FamilyBoardInteractive
                     Content = new FormUrlEncodedContent(formValues)
                 };
                 var tokenResponse = await client.SendAsync(tokenRequest);
-
-                result = await tokenResponse.Content.ReadAsStringAsync();
+                if(tokenResponse.IsSuccessStatusCode)
+                {
+                    result = await tokenResponse.Content.ReadAsStringAsync();
+                }
             }
 
             return result;
@@ -116,8 +118,10 @@ namespace FamilyBoardInteractive
                     Content = new FormUrlEncodedContent(formValues)
                 };
                 var tokenResponse = await client.SendAsync(tokenRequest);
-
-                result = await tokenResponse.Content.ReadAsStringAsync();
+                if (tokenResponse.IsSuccessStatusCode)
+                {
+                    result = await tokenResponse.Content.ReadAsStringAsync();
+                }
             }
 
             return result;

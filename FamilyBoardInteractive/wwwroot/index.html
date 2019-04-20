@@ -18,11 +18,7 @@
 
     <div class="board">
 
-        <div class="image" id="x">
-            image image image image image image image image image image image image image image image image image image
-            image image image image image image image image image image image image image image image image image image
-            image image image image image image image image image image image image image image image image image image
-            image image image image image image image image image image image image image
+        <div id="imageContainer" style="overflow: hidden;">
         </div>
 
         <div class="main">
@@ -92,7 +88,7 @@
 
     </div>
 
-    <script>
+    <script type="text/javascript">
         function currentDate() {
             let current = new Date();
             current.setHours(0, 0, 0, 0)
@@ -112,6 +108,7 @@
 
             connection.on('newMessage', newMessage);
             connection.on('updateCalendar', updateCalendar);
+            connection.on('updateImage', updateImage);
 
             connection.onclose(() => console.log('disconnected'));
 
@@ -183,6 +180,18 @@
                 }
 
                 putMessage("calendar updated", 2);
+            }
+
+            // --------------------------------------------------------------------------------
+            // update calendar
+            function updateImage(imageData) {
+                putMessage("updating image");
+                console.log(imageData);
+                var imageObj = JSON.parse(imageData);
+                console.log(imageObj);
+                //$("#image").attr("style","background-image: url('"  + imageUri + "');").html("<img src='" + imageUri + "' />");
+                $("#imageContainer").html("<img id='image' style='position: relative;' src='" + imageObj.path + "' />");
+                putMessage("image updated", 2);
             }
         });
     </script>
