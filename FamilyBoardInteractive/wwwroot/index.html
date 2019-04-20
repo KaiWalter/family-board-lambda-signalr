@@ -190,7 +190,16 @@
                 var imageObj = JSON.parse(imageData);
                 console.log(imageObj);
                 //$("#image").attr("style","background-image: url('"  + imageUri + "');").html("<img src='" + imageUri + "' />");
-                $("#imageContainer").html("<img id='image' style='position: relative;' src='" + imageObj.path + "' />");
+                //$("#imageContainer").html("<img id='image' style='position: relative;' src='" + imageObj.path + "' />");
+
+                $("<img/>").attr("src", imageObj.path).on("load", function () {
+                    $(this).remove(), $("#imageContainer").css({
+                     background: "#000 url(" + imageObj.path + ") center center",
+                     backgroundSize: "cover",
+                     backgroundRepeat: "no-repeat"
+                    });
+                });
+
                 putMessage("image updated", 2);
             }
         });
