@@ -190,7 +190,7 @@
                 var imageObj = JSON.parse(imageData);
                 console.log(imageObj);
                 //$("#image").attr("style","background-image: url('"  + imageUri + "');").html("<img src='" + imageUri + "' />");
-                $("#imageContainer").html("<img id='image' style='position: relative;' src='" + imageObj.path + "' />");
+                $("#imageContainer").html("<img id='image' style='position: relative;image-orientation: from-image;' src='" + imageObj.path + "' />");
                 putMessage("image updated", 2);
             }
         });
