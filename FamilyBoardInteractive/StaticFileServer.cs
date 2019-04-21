@@ -12,9 +12,6 @@ using System.Net.Http.Headers;
 
 namespace FamilyBoardInteractive
 {
-    /// <summary>
-    /// source: https://anthonychu.ca/post/azure-functions-static-file-server/
-    /// </summary>
     public static class StaticFileServer
     {
         private const string StaticFilesFolder = "wwwroot";
