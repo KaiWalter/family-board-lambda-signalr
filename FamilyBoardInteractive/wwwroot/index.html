@@ -162,7 +162,14 @@
                     iDate = addDays(firstDate, i);
 
                     // reset cell
-                    $("#day" + i).html("<div id='dayHeader'><div class='day_number'>" + iDate.getDate() + "</div></div><div id='dayContent'></div>");
+                    let dayTitle = "<span class='dayofmonth'>" + iDate.getDate() +"</span>";
+                    if (iDate.getDay() == 1 || iDate.getDate() == 1) {
+                        let monthNames = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+                        dayTitle = "<span class='monthofyear'>" + monthNames[iDate.getMonth()-1] + "</span><br/>" + dayTitle;
+                    } else {
+                        dayTitle = "<span class='monthofyear'></span><br/>" + dayTitle;
+                    }
+                    $("#day" + i).html("<div id='dayHeader'><div class='day_title'>" + dayTitle + "</div></div><div id='dayContent'></div>");
                     $("#day" + i).removeClass("today").add("day");
 
                     // build cell content
