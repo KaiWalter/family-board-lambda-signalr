@@ -25,61 +25,6 @@
         <div class="main">
 
             <div class="calendar">
-
-                <div class="weekday">Mo</div>
-                <div class="weekday">Di</div>
-                <div class="weekday">Mi</div>
-                <div class="weekday">Do</div>
-                <div class="weekday">Fr</div>
-                <div class="weekday">Sa</div>
-                <div class="weekday">So</div>
-
-                <div id="day0" class="day">
-                </div>
-                <div id="day1" class="day">
-                </div>
-                <div id="day2" class="day">
-                </div>
-                <div id="day3" class="day">
-                </div>
-                <div id="day4" class="day">
-                </div>
-                <div id="day5" class="day">
-                </div>
-                <div id="day6" class="day">
-                </div>
-
-                <div id="day7" class="day">
-                </div>
-                <div id="day8" class="day">
-                </div>
-                <div id="day9" class="day">
-                </div>
-                <div id="day10" class="day">
-                </div>
-                <div id="day11" class="day">
-                </div>
-                <div id="day12" class="day">
-                </div>
-                <div id="day13" class="day">
-                </div>
-
-                <div id="day14" class="day">
-                </div>
-                <div id="day15" class="day">
-                </div>
-                <div id="day16" class="day">
-                </div>
-                <div id="day17" class="day">
-                </div>
-                <div id="day18" class="day">
-                </div>
-                <div id="day19" class="day">
-                </div>
-                <div id="day20" class="day">
-                </div>
-
-
             </div>
 
             <div id="message">
@@ -97,6 +42,9 @@
         }
 
         $(document).ready(function () {
+
+            let monthNames = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+            let weekDayNames = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
             const connection = new signalR.HubConnectionBuilder()
                 .withUrl("/api")
@@ -134,17 +82,11 @@
             // clock
             function startTime() {
                 var today = new Date();
-                var h = today.getHours();
-                var m = today.getMinutes();
-                var s = today.getSeconds();
-                m = checkTime(m);
-                s = checkTime(s);
+                var h = today.getHours().toString().padStart(2,"0");
+                var m = today.getMinutes().toString().padStart(2,"0");
+                var s = today.getSeconds().toString().padStart(2,"0");
                 $(".clock").html(h + ":" + m + "<span class='sec'>" + s + "</span>");
                 var t = setTimeout(startTime, 500);
-            }
-            function checkTime(i) {
-                if (i < 10) { i = "0" + i };  // add zero in front of numbers < 10
-                return i;
             }
 
             // --------------------------------------------------------------------------------
@@ -176,49 +118,56 @@
 
                 // fill calendar
                 let iDate = currentDate();
+                $(".calender").html("");
 
-                for (i = 0; i < 21; i++) {
-                    let iDate = addDays(firstDate, i);
-                    let isToday = iDate.toISOString() === current.toISOString();
+                for (w = 0; w < 3; w++)
+                    for (wd = 0; wd < 7; wd++) {
+                        let i = (w * 7) + wd;
+                        let iDate = addDays(firstDate, i);
+                        let isToday = iDate.toISOString() === current.toISOString();
+                        let dayCell = $("<div/>");
+                        dayCell.attr("id", "day" + i).addClass("day");
+                        $(".calendar").append(dayCell);
 
-                    // reset cell
-                    let dayTitle = "<span class='dayofmonth'>" + iDate.getDate() + "</span>";
-                    if (iDate.getDay() == 1 ||
-                        iDate.getDate() == 1 ||
-                        isToday) {
-                        let monthNames = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
-                        dayTitle = "<span class='monthofyear'>" + monthNames[iDate.getMonth()] + "</span><br/>" + dayTitle;
-                    } else {
-                        dayTitle = "<span class='monthofyear'></span><br/>" + dayTitle;
-                    }
-                    $("#day" + i).html("<div id='dayHeader'><div class='day_title'>" + dayTitle + "</div></div><div id='dayContent'></div>");
-                    $("#day" + i).removeClass("today").add("day");
-
-                    // build cell content
-                    let content = "";
-
-                    let iDateFormatted = iDate.toISOString().split('T')[0];
-
-                    // render all day events always on top
-                    events.forEach((entry) => {
-                        if (iDateFormatted === entry.date && entry.allDayEvent) {
-                            content += "<div class='all_day'>" + entry.description + "</div>";
+                        // reset cell
+                        let monthTitle = "";
+                        if (i === 0 ||
+                            iDate.getDate() == 1 ||
+                            isToday) {
+                            monthTitle = monthNames[iDate.getMonth()];
                         }
-                    });
+                        let dayTitle = "<span class='monthofyear'>" + monthTitle + "</span><br/>" +
+                                    "<span class='dayofweek'>" + weekDayNames[wd] + "</span><br/>" + 
+                                    "<span class='dayofmonth'>" + iDate.getDate().toString().padStart(2,"0") + "</span>";
 
-                    // render timed events below
-                    events.forEach((entry) => {
-                        if (iDateFormatted === entry.date && !entry.allDayEvent) {
-                            content += "<p class='single_event'>" + entry.time + " " + entry.description + "</p>";
+                        $("#day" + i).html("<div id='dayHeader'><div class='day_title'>" + dayTitle + "</div></div><div id='dayContent'></div>");
+                        $("#day" + i).removeClass("today").removeClass("monthfirst").addClass("day");
+
+                        // build cell content
+                        let content = "";
+
+                        let iDateFormatted = iDate.toISOString().split('T')[0];
+
+                        // render all day events always on top
+                        events.forEach((entry) => {
+                            if (iDateFormatted === entry.date && entry.allDayEvent) {
+                                content += "<div class='all_day'>" + entry.description + "</div>";
+                            }
+                        });
+
+                        // render timed events below
+                        events.forEach((entry) => {
+                            if (iDateFormatted === entry.date && !entry.allDayEvent) {
+                                content += "<p class='single_event'>" + entry.time + " " + entry.description + "</p>";
+                            }
+                        });
+
+                        $("#day" + i + " > #dayContent").html(content);
+
+                        if (isToday) {
+                            $("#day" + i).toggleClass("today");
                         }
-                    });
-
-                    $("#day" + i + " > #dayContent").html(content);
-
-                    if (isToday) {
-                        $("#day" + i).toggleClass("today");
                     }
-                }
 
                 putMessage("calendar updated", 2);
             }
