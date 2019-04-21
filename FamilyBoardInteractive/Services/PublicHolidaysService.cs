@@ -74,7 +74,12 @@ namespace FamilyBoardInteractive.Services
 
         public async Task<List<CalendarEntry>> GetEventsSample()
         {
-            throw new NotImplementedException();
+            var result = new List<CalendarEntry>();
+
+            result.AddRange(await GetHolidaysForYear(DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow.Year));
+
+            return result;
+
         }
     }
 }

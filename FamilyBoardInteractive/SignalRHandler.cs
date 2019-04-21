@@ -40,13 +40,13 @@ namespace FamilyBoardInteractive
         }
 
         [FunctionName(nameof(UpdateCalendar))]
-        public static async Task<IAsyncCollector<SignalRMessage>> UpdateCalendar(
+        public static Task UpdateCalendar(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post")]object message,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = await GetCalendars();
+            var events = GetCalendars().GetAwaiter().GetResult();
 
-            return (IAsyncCollector<SignalRMessage>)signalRMessages.AddAsync(
+            return signalRMessages.AddAsync(
                 new SignalRMessage
                 {
                     Target = SIGNALRMESSAGEUPDATECALENDER,
@@ -68,7 +68,7 @@ namespace FamilyBoardInteractive
             [QueueTrigger(Constants.QUEUEMESSAGEUPDATECALENDER)]string queueMessage,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = GetCalendars();
+            var events = GetCalendars().GetAwaiter().GetResult();
 
             return signalRMessages.AddAsync(
                 new SignalRMessage
@@ -110,11 +110,16 @@ namespace FamilyBoardInteractive
 
         private static async Task<System.Collections.Generic.List<Models.CalendarEntry>> GetCalendars()
         {
-            var start = DateTime.Now.Date;
+            var start = DateTime.Now.Date.AddDays(-7);
             var end = DateTime.Now.Date.AddDays(Constants.CalendarWeeks * 7);
 
-            var calendarService = new GoogleCalendarService();
-            var events = await calendarService.GetEvents(start, end);
+            var events = new System.Collections.Generic.List<Models.CalendarEntry>();
+
+            var publicHolidaysService = new PublicHolidaysService();
+            events.AddRange(await publicHolidaysService.GetEvents(start, end));
+
+            var googleCalendarService = new GoogleCalendarService();
+            events.AddRange(await googleCalendarService.GetEvents(start, end));
 
             return events;
         }

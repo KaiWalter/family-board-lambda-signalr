@@ -13,7 +13,7 @@ namespace FamilyBoardInteractive.UnitTests
         }
 
         [Test]
-        public void TestGoogleCalendarServiceSample()
+        public async Task TestGoogleCalendarServiceSample()
         {
             // arrange
             var service = new GoogleCalendarService(
@@ -23,7 +23,7 @@ namespace FamilyBoardInteractive.UnitTests
                 );
 
             // act
-            var result = service.GetEventsSample();
+            var result = await service.GetEventsSample();
 
             // assert
             Assert.IsNotNull(result);
