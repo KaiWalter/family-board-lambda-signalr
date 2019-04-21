@@ -14,6 +14,6 @@ The app will be put into a container and deployed to Rasberry Pi W.
 
 Front-end is based on static pages which are hosted from Consumption Plan Azure Functions (class `StaticFileServer`)- derived from this [blog by Anthony Chu](https://anthonychu.ca/post/azure-functions-static-file-server/).
 
-For basic protection `index.html` can only be opened with a Azure Functions key (code query parameter). All other static content is not protected.
+For basic protection `index.html` can only be opened with a Azure Functions key: `https://{function-app}.azurewebsites.net/index.html?code={key}`. All other static content is not protected.
 
 ...to be continued...

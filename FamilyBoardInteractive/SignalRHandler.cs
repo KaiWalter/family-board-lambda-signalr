@@ -93,18 +93,19 @@ namespace FamilyBoardInteractive
         }
 
         [FunctionName(nameof(ScheduledCalendarUpdate))]
-        public static Task ScheduledCalendarUpdate(
-            [TimerTrigger(Constants.SCHEDULEUPDATECALENDAR, RunOnStartup = true)]TimerInfo timer,
-            [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
+        public static void ScheduledCalendarUpdate(
+            [TimerTrigger(Constants.SCHEDULEUPDATECALENDAR, RunOnStartup = false)]TimerInfo timer,
+            [Queue(Constants.QUEUEMESSAGEUPDATECALENDER)]out string updateCalendarMessage)
         {
-            var events = GetCalendars();
+            updateCalendarMessage = $"scheduled {DateTime.UtcNow.ToString("u")}";
+        }
 
-            return signalRMessages.AddAsync(
-                new SignalRMessage
-                {
-                    Target = SIGNALRMESSAGEUPDATECALENDER,
-                    Arguments = new[] { events }
-                });
+        [FunctionName(nameof(ScheduledImageUpdate))]
+        public static void ScheduledImageUpdate(
+            [TimerTrigger(Constants.SCHEDULEUPDATEIMAGE, RunOnStartup = false)]TimerInfo timer,
+            [Queue(Constants.QUEUEMESSAGEPUSHIMAGE)]out string pushImageMessage)
+        {
+            pushImageMessage = $"scheduled {DateTime.UtcNow.ToString("u")}";
         }
 
         private static System.Collections.Generic.List<Models.CalendarEntry> GetCalendars()

@@ -9,6 +9,7 @@ namespace FamilyBoardInteractive
         public const int CalendarWeeks = 3;
 
         public const string SCHEDULEUPDATECALENDAR = "0 */5 * * * *";
+        public const string SCHEDULEUPDATEIMAGE = "0 */1 * * * *";
 
         public const string QUEUEMESSAGEREFRESHMSATOKEN = "refreshmsatoken";
         public const string QUEUEMESSAGEUPDATECALENDER = "updatecalendar";
