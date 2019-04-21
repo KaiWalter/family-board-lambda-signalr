@@ -3,8 +3,8 @@ body {
     background-color: black;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: white;
-    margin: 0 !important;
-    padding: 0 !important;
+    margin: 0 0 0 0 !important;
+    padding: 0 0 0 0 !important;
 }
 
 .board {
@@ -51,8 +51,10 @@ body {
 }
 
 .week_title {
-    position: relative;
-    top: 40%;
+    font-size: 1.2em;
+    margin-left: 15px;
+    margin-top: 90px;
+    padding: 0 0 0 0;
 }
 
 .today {

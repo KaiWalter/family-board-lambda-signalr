@@ -140,9 +140,10 @@
 
                         // handle week number
                         if (wd === 0) {
-                            let weekNoCell = $("<div/>");
-                            weekNoCell.addClass("week_title").html(ISO8601_week_no(iDate));
-                            $(".calendar").append(weekNoCell);
+                            let weekNoDiv = $("<div/>");
+                            let weekNoTitle = ISO8601_week_no(iDate).toString().padStart(2, "0");
+                            weekNoDiv.addClass("week_title").html(weekNoTitle);
+                            $(".calendar").append(weekNoDiv);
                         }
 
                         // reset cell
