@@ -11,19 +11,18 @@ namespace FamilyBoardInteractive
     public static class SignalRHandler
     {
         private const string HUBNAME = "fb";
-        private const string QUEUENAME = "boardUpdates";
-        private const string SCHEDULEUPDATECALENDAR = "0 */1 * * * *";
-        private const string QUEUEMESSAGEUPDATECALENDER = "updateCalendar";
+        private const string QUEUEMESSAGEBOARDUPDATE = "boardUpdates";
         private const string SIGNALRMESSAGEUPDATECALENDER = "updateCalendar";
+        private const string SIGNALRMESSAGEUPDATEIMAGE = "updateImage";
         private const string SIGNALRMESSAGE = "newMessage";
 
         [FunctionName("negotiate")]
         public static SignalRConnectionInfo Negotiate(
             [HttpTrigger(AuthorizationLevel.Anonymous)]HttpRequest req,
             [SignalRConnectionInfo(HubName = HUBNAME)]SignalRConnectionInfo connectionInfo,
-            [Queue(QUEUENAME)]out string queueMessage)
+            [Queue(QUEUEMESSAGEBOARDUPDATE)]out string queueMessage)
         {
-            queueMessage = QUEUEMESSAGEUPDATECALENDER;
+            queueMessage = "new client connection " + DateTime.UtcNow.ToString("u");
             return connectionInfo;
         }
 
@@ -56,33 +55,18 @@ namespace FamilyBoardInteractive
         }
 
         [FunctionName(nameof(QueuedBoardUpdate))]
-        public static Task QueuedBoardUpdate(
-            [QueueTrigger(QUEUENAME)]string queueMessage,
-            [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
+        public static void QueuedBoardUpdate(
+            [QueueTrigger(QUEUEMESSAGEBOARDUPDATE)]string queueMessage,
+            [Queue(Constants.QUEUEMESSAGEUPDATECALENDER)]out string updateCalendarMessage,
+            [Queue(Constants.QUEUEMESSAGEPUSHIMAGE)]out string pushImageMessage)
         {
-            switch (queueMessage)
-            {
-                case QUEUEMESSAGEUPDATECALENDER:
-                    {
-                        var events = GetCalendars();
-
-                        return signalRMessages.AddAsync(
-                            new SignalRMessage
-                            {
-                                Target = SIGNALRMESSAGEUPDATECALENDER,
-                                Arguments = new[] { events }
-                            });
-                    }
-
-            }
-
-            return null;
+            updateCalendarMessage = pushImageMessage = queueMessage;
         }
 
-        [FunctionName(nameof(ScheduledCalendarUpdate))]
-        public static Task ScheduledCalendarUpdate(
-        [TimerTrigger(SCHEDULEUPDATECALENDAR, RunOnStartup = true)]TimerInfo timer,
-        [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
+        [FunctionName(nameof(QueuedCalendarUpdate))]
+        public static Task QueuedCalendarUpdate(
+            [QueueTrigger(Constants.QUEUEMESSAGEUPDATECALENDER)]string queueMessage,
+            [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
             var events = GetCalendars();
 
@@ -92,6 +76,36 @@ namespace FamilyBoardInteractive
                     Target = SIGNALRMESSAGEUPDATECALENDER,
                     Arguments = new[] { events }
                 });
+        }
+
+
+        [FunctionName(nameof(QueuedImageUpdate))]
+        public static Task QueuedImageUpdate(
+            [QueueTrigger(Constants.QUEUEMESSAGEUPDATEIMAGE)]string queueMessage,
+            [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
+        {
+            return signalRMessages.AddAsync(
+                new SignalRMessage
+                {
+                    Target = SIGNALRMESSAGEUPDATEIMAGE,
+                    Arguments = new[] { queueMessage }
+                });
+        }
+
+        [FunctionName(nameof(ScheduledCalendarUpdate))]
+        public static void ScheduledCalendarUpdate(
+            [TimerTrigger(Constants.SCHEDULEUPDATECALENDAR, RunOnStartup = false)]TimerInfo timer,
+            [Queue(Constants.QUEUEMESSAGEUPDATECALENDER)]out string updateCalendarMessage)
+        {
+            updateCalendarMessage = $"scheduled {DateTime.UtcNow.ToString("u")}";
+        }
+
+        [FunctionName(nameof(ScheduledImageUpdate))]
+        public static void ScheduledImageUpdate(
+            [TimerTrigger(Constants.SCHEDULEUPDATEIMAGE, RunOnStartup = false)]TimerInfo timer,
+            [Queue(Constants.QUEUEMESSAGEPUSHIMAGE)]out string pushImageMessage)
+        {
+            pushImageMessage = $"scheduled {DateTime.UtcNow.ToString("u")}";
         }
 
         private static System.Collections.Generic.List<Models.CalendarEntry> GetCalendars()

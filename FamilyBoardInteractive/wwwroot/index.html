@@ -18,11 +18,7 @@
 
     <div class="board">
 
-        <div class="image" id="x">
-            image image image image image image image image image image image image image image image image image image
-            image image image image image image image image image image image image image image image image image image
-            image image image image image image image image image image image image image image image image image image
-            image image image image image image image image image image image image image
+        <div id="imageContainer" style="overflow: hidden;">
         </div>
 
         <div class="main">
@@ -92,7 +88,7 @@
 
     </div>
 
-    <script>
+    <script type="text/javascript">
         function currentDate() {
             let current = new Date();
             current.setHours(0, 0, 0, 0)
@@ -112,6 +108,7 @@
 
             connection.on('newMessage', newMessage);
             connection.on('updateCalendar', updateCalendar);
+            connection.on('updateImage', updateImage);
 
             connection.onclose(() => console.log('disconnected'));
 
@@ -133,6 +130,12 @@
 
             // --------------------------------------------------------------------------------
             // update calendar
+            function addDays(date, days) {
+                var result = new Date(date);
+                result.setDate(result.getDate() + days);
+                return result;
+            }
+
             function updateCalendar(events) {
                 putMessage("updating calendar");
 
@@ -141,18 +144,24 @@
 
                 let wd = current.getDay();
                 let firstDate = currentDate();
+                // flip week on Sunday
+                if (wd === 0) {
+                    firstDate = addDays(firstDate, -1);
+                    wd = firstDate.getDay();
+                }
+                // find Monday
                 while (wd > 1) {
-                    wd--;
-                    firstDate.setDate(firstDate.getDate() - 1);
+                    firstDate = addDays(firstDate, -1);
+                    wd = firstDate.getDay();
                 }
 
                 // fill calendar
                 let iDate = currentDate();
 
                 for (i = 0; i < 21; i++) {
-                    iDate.setDate(firstDate.getDate() + i);
+                    iDate = addDays(firstDate, i);
 
-                    // reset
+                    // reset cell
                     $("#day" + i).html("<div id='dayHeader'><div class='day_number'>" + iDate.getDate() + "</div></div><div id='dayContent'></div>");
                     $("#day" + i).removeClass("today").add("day");
 
@@ -183,6 +192,23 @@
                 }
 
                 putMessage("calendar updated", 2);
+            }
+
+            // --------------------------------------------------------------------------------
+            // update calendar
+            function updateImage(imageData) {
+                putMessage("updating image");
+                var imageObj = JSON.parse(imageData);
+
+                $("<img/>").attr("src", imageObj.path).on("load", function () {
+                    $(this).remove(), $("#imageContainer").css({
+                        background: "#000 url(" + imageObj.path + ") center center",
+                        backgroundSize: "cover",
+                        backgroundRepeat: "no-repeat"
+                    });
+                });
+
+                putMessage("image updated", 2);
             }
         });
     </script>
