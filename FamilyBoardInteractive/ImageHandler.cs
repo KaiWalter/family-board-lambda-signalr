@@ -23,14 +23,32 @@ namespace FamilyBoardInteractive
     {
         const string ONEDRIVEPATH = "https://graph.microsoft.com/v1.0/me/drive/root:/{0}:/children";
 
+        [FunctionName(nameof(QueueSasUrlForImageBlob))]
+        public static async Task QueueSasUrlForImageBlob(
+            [BlobTrigger(Constants.BLOBPATHBOARDIMAGE)] CloudBlockBlob imageBlob,
+            [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
+            ILogger log)
+        {
+            SharedAccessBlobPolicy sasConstraints = new SharedAccessBlobPolicy();
+            sasConstraints.SharedAccessExpiryTime = DateTimeOffset.UtcNow.AddMinutes(1); ;
+            sasConstraints.Permissions = SharedAccessBlobPermissions.Read;
+            string sasContainerToken = imageBlob.GetSharedAccessSignature(sasConstraints);
+            log.LogInformation(imageBlob.Uri + sasContainerToken);
 
+            var imageObject = new JObject()
+            {
+                { "path", imageBlob.Uri + sasContainerToken }
+            };
+
+            await updateImageMessage.AddAsync(imageObject.ToString());
+        }
 
         [FunctionName(nameof(QueuedPushNextImage))]
         public static async Task QueuedPushNextImage(
             [QueueTrigger(Constants.QUEUEMESSAGEPUSHIMAGE)]string queueMessage,
             [Table("Tokens", partitionKey: "Token", rowKey: "MSA")] MSAToken msaToken,
             [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
-            [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
+            [Blob(Constants.BLOBPATHBOARDIMAGE, access: FileAccess.Write)] CloudBlockBlob outputBlob,
             ILogger log)
         {
             if (DateTime.UtcNow > msaToken.Expires) // token invalid
@@ -39,8 +57,8 @@ namespace FamilyBoardInteractive
                 return;
             }
 
-            var result = await GetNextImage(msaToken, updateImageMessage);
-            log.LogTrace(result);
+            outputBlob.Properties.ContentType = "image/jpeg";
+            await outputBlob.UploadFromStreamAsync(await GetNextBlobImage(msaToken));
         }
 
         [FunctionName(nameof(PushNextImage))]
@@ -48,8 +66,7 @@ namespace FamilyBoardInteractive
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             [Table("Tokens", partitionKey: "Token", rowKey: "MSA")] MSAToken msaToken,
             [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
-            [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
-            [Blob("images/boardimage.jpg",access: FileAccess.Write)] CloudBlockBlob outputBlob,
+            [Blob(Constants.BLOBPATHBOARDIMAGE, access: FileAccess.Write)] CloudBlockBlob outputBlob,
             ILogger log)
         {
             if (DateTime.UtcNow > msaToken.Expires) // token invalid
@@ -58,63 +75,44 @@ namespace FamilyBoardInteractive
                 return new StatusCodeResult(503);
             }
 
-            var result = await GetNextImage(msaToken, updateImageMessage);
             outputBlob.Properties.ContentType = "image/jpeg";
             await outputBlob.UploadFromStreamAsync(await GetNextBlobImage(msaToken));
 
-            log.LogTrace(result);
-
-            return new OkObjectResult(result);
+            return new OkResult();
         }
 
-        private static async Task<string> GetNextImage(MSAToken msaToken, IAsyncCollector<string> updateImageMessage)
-        {
-            string result = string.Empty;
+        //private static async Task<string> GetNextImage(MSAToken msaToken, IAsyncCollector<string> updateImageMessage)
+        //{
+        //    string result = string.Empty;
 
-            using (var client = new HttpClient())
-            {
-                var imageListRequest = new HttpRequestMessage(HttpMethod.Get, string.Format(ONEDRIVEPATH, "Dakboard"));
-                imageListRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(msaToken.TokenType, msaToken.AccessToken);
+        //    using (var client = new HttpClient())
+        //    {
+        //        var imageListRequest = new HttpRequestMessage(HttpMethod.Get, string.Format(ONEDRIVEPATH, "Dakboard"));
+        //        imageListRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(msaToken.TokenType, msaToken.AccessToken);
 
-                var imageListResponse = await client.SendAsync(imageListRequest);
-                if (imageListResponse.IsSuccessStatusCode)
-                {
-                    var imageListString = await imageListResponse.Content.ReadAsStringAsync();
-                    var imageList = (JArray)JObject.Parse(imageListString)["value"];
+        //        var imageListResponse = await client.SendAsync(imageListRequest);
+        //        if (imageListResponse.IsSuccessStatusCode)
+        //        {
+        //            var imageListString = await imageListResponse.Content.ReadAsStringAsync();
+        //            var imageList = (JArray)JObject.Parse(imageListString)["value"];
 
-                    JObject imageObject = FindRandomImage(imageList);
+        //            JObject imageObject = FindRandomImage(imageList);
 
-                    var imagePath = imageObject["@microsoft.graph.downloadUrl"].Value<string>();
+        //            var imagePath = imageObject["@microsoft.graph.downloadUrl"].Value<string>();
 
-                    var imageData = new JObject();
-                    imageData["path"] = imageObject["@microsoft.graph.downloadUrl"];
-                    imageData["specs"] = imageObject["image"];
-                    imageData["photoSpecs"] = imageObject["photo"];
+        //            var imageData = new JObject();
+        //            imageData["path"] = imageObject["@microsoft.graph.downloadUrl"];
+        //            imageData["specs"] = imageObject["image"];
+        //            imageData["photoSpecs"] = imageObject["photo"];
 
-                    await updateImageMessage.AddAsync(imageData.ToString());
+        //            await updateImageMessage.AddAsync(imageData.ToString());
 
-                    result = $"image pushed {imagePath}";
-                }
-            }
+        //            result = $"image pushed {imagePath}";
+        //        }
+        //    }
 
-            return result;
-        }
-
-        private static JObject FindRandomImage(JArray imageList)
-        {
-            string imageMimeType = string.Empty;
-            JObject imageObject = null;
-
-            while (imageMimeType.CompareTo("image/jpeg") != 0)
-            {
-                var randomImageIndex = new Random().Next(imageList.Count);
-                imageObject = (JObject)(imageList[randomImageIndex]);
-                var imageFile = (JObject)imageObject["file"];
-                imageMimeType = imageFile["mimeType"].Value<string>();
-            }
-
-            return imageObject;
-        }
+        //    return result;
+        //}
 
         private static async Task<Stream> GetNextBlobImage(MSAToken msaToken)
         {
@@ -135,11 +133,6 @@ namespace FamilyBoardInteractive
 
                     var imagePath = imageObject["@microsoft.graph.downloadUrl"].Value<string>();
 
-                    var imageData = new JObject();
-                    imageData["path"] = imageObject["@microsoft.graph.downloadUrl"];
-                    imageData["specs"] = imageObject["image"];
-                    imageData["photoSpecs"] = imageObject["photo"];
-
                     using (var webClient = new WebClient())
                     {
                         byte[] imageBytes = webClient.DownloadData(imagePath);
@@ -150,6 +143,22 @@ namespace FamilyBoardInteractive
             }
 
             return imageResult;
+        }
+
+        private static JObject FindRandomImage(JArray imageList)
+        {
+            string imageMimeType = string.Empty;
+            JObject imageObject = null;
+
+            while (imageMimeType.CompareTo("image/jpeg") != 0)
+            {
+                var randomImageIndex = new Random().Next(imageList.Count);
+                imageObject = (JObject)(imageList[randomImageIndex]);
+                var imageFile = (JObject)imageObject["file"];
+                imageMimeType = imageFile["mimeType"].Value<string>();
+            }
+
+            return imageObject;
         }
 
         private static byte[] TransformImage(byte[] imageInBytes)

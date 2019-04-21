@@ -14,5 +14,7 @@ namespace FamilyBoardInteractive
         public const string QUEUEMESSAGEUPDATECALENDER = "updatecalendar";
         public const string QUEUEMESSAGEUPDATEIMAGE = "updateimage";
         public const string QUEUEMESSAGEPUSHIMAGE = "pushimage";
+
+        public const string BLOBPATHBOARDIMAGE = "images/boardimage.jpg";
     }
 }
