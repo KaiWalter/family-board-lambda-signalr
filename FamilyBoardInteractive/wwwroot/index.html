@@ -130,6 +130,12 @@
 
             // --------------------------------------------------------------------------------
             // update calendar
+            function addDays(date, days) {
+                var result = new Date(date);
+                result.setDate(result.getDate() + days);
+                return result;
+            }
+
             function updateCalendar(events) {
                 putMessage("updating calendar");
 
@@ -147,9 +153,9 @@
                 let iDate = currentDate();
 
                 for (i = 0; i < 21; i++) {
-                    iDate.setDate(firstDate.getDate() + i);
+                    iDate = addDays(firstDate, i);
 
-                    // reset
+                    // reset cell
                     $("#day" + i).html("<div id='dayHeader'><div class='day_number'>" + iDate.getDate() + "</div></div><div id='dayContent'></div>");
                     $("#day" + i).removeClass("today").add("day");
 
@@ -187,37 +193,14 @@
             function updateImage(imageData) {
                 putMessage("updating image");
                 var imageObj = JSON.parse(imageData);
-                console.log(imageObj);
 
-                //$("#imageContainer").html("<img id='image' style='position: relative; image-orientation:from-image;' src='" + imageObj.path + "' />");
-
-                //$("<img/>").attr("src", imageObj.path).attr("image-orientation", "from-image").on("load", function () {
                 $("<img/>").attr("src", imageObj.path).on("load", function () {
                     $(this).remove(), $("#imageContainer").css({
-                     background: "#000 url(" + imageObj.path + ") center center",
-                     backgroundSize: "cover",
-                     backgroundRepeat: "no-repeat"
+                        background: "#000 url(" + imageObj.path + ") center center",
+                        backgroundSize: "cover",
+                        backgroundRepeat: "no-repeat"
                     });
                 });
-
-                //$("<img/>")
-                //    .attr("src", imageObj.path)
-                //    .attr("image-orientation", "from-image")
-                //    .attr("crossOrigin", "Anonymous")
-                //    .on("load", function () {
-                //        var canvas = document.createElement('canvas');
-                //        var ctx = canvas.getContext('2d');
-                //        canvas.width = this.width;
-                //        canvas.height = this.height;
-                //        ctx.drawImage(this, 0, 0);
-                //        var imageDataUrl = canvas.toDataURL('image/jpeg');
-
-                //        $(this).remove(), $("#imageContainer").css({
-                //            background: "#000 url(" + imageDataUrl + ") center center",
-                //            backgroundSize: "cover",
-                //            backgroundRepeat: "no-repeat"
-                //        });
-                //    });
 
                 putMessage("image updated", 2);
             }
