@@ -21,18 +21,6 @@ body {
     grid-template-rows: auto 30px;
 }
 
-.calendar {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-}
-
-.day {
-    font-size: 1em;
-    margin-left: 3px;
-    margin-right: 3px;
-}
-
 .clock {
     color: white;
     font-size: 500%;
@@ -49,6 +37,23 @@ body {
         position: relative;
         top: -1em;
     }
+
+.calendar {
+    display: grid;
+    grid-template-columns: 1fr repeat(7, 3fr);
+    grid-template-rows: repeat(3, 1fr);
+}
+
+.day {
+    font-size: 1em;
+    margin-left: 3px;
+    margin-right: 3px;
+}
+
+.week_title {
+    position: relative;
+    top: 40%;
+}
 
 .today {
     font-size: 1em;

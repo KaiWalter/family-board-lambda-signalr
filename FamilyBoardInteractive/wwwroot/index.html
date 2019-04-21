@@ -82,15 +82,27 @@
             // clock
             function startTime() {
                 var today = new Date();
-                var h = today.getHours().toString().padStart(2,"0");
-                var m = today.getMinutes().toString().padStart(2,"0");
-                var s = today.getSeconds().toString().padStart(2,"0");
+                var h = today.getHours().toString().padStart(2, "0");
+                var m = today.getMinutes().toString().padStart(2, "0");
+                var s = today.getSeconds().toString().padStart(2, "0");
                 $(".clock").html(h + ":" + m + "<span class='sec'>" + s + "</span>");
                 var t = setTimeout(startTime, 500);
             }
 
             // --------------------------------------------------------------------------------
             // update calendar
+            function ISO8601_week_no(dt) {
+                var tdt = new Date(dt.valueOf());
+                var dayn = (dt.getDay() + 6) % 7;
+                tdt.setDate(tdt.getDate() - dayn + 3);
+                var firstThursday = tdt.valueOf();
+                tdt.setMonth(0, 1);
+                if (tdt.getDay() !== 4) {
+                    tdt.setMonth(0, 1 + ((4 - tdt.getDay()) + 7) % 7);
+                }
+                return 1 + Math.ceil((firstThursday - tdt) / 604800000);
+            }
+
             function addDays(date, days) {
                 var result = new Date(date);
                 result.setDate(result.getDate() + days);
@@ -118,30 +130,36 @@
 
                 // fill calendar
                 let iDate = currentDate();
-                $(".calender").html("");
+                $(".calendar").empty();
 
                 for (w = 0; w < 3; w++)
                     for (wd = 0; wd < 7; wd++) {
                         let i = (w * 7) + wd;
                         let iDate = addDays(firstDate, i);
                         let isToday = iDate.toISOString() === current.toISOString();
-                        let dayCell = $("<div/>");
-                        dayCell.attr("id", "day" + i).addClass("day");
-                        $(".calendar").append(dayCell);
+
+                        // handle week number
+                        if (wd === 0) {
+                            let weekNoCell = $("<div/>");
+                            weekNoCell.addClass("week_title").html(ISO8601_week_no(iDate));
+                            $(".calendar").append(weekNoCell);
+                        }
 
                         // reset cell
+                        let dayCell = $("<div/>");
+                        dayCell.attr("id", "day" + i).addClass("day");
                         let monthTitle = "";
-                        if (i === 0 ||
-                            iDate.getDate() == 1 ||
-                            isToday) {
+                        // month name on first element or first of month
+                        if (i === 0 || iDate.getDate() == 1) {
                             monthTitle = monthNames[iDate.getMonth()];
                         }
                         let dayTitle = "<span class='monthofyear'>" + monthTitle + "</span><br/>" +
-                                    "<span class='dayofweek'>" + weekDayNames[wd] + "</span><br/>" + 
-                                    "<span class='dayofmonth'>" + iDate.getDate().toString().padStart(2,"0") + "</span>";
+                            "<span class='dayofweek'>" + weekDayNames[wd] + "</span><br/>" +
+                            "<span class='dayofmonth'>" + iDate.getDate().toString().padStart(2, "0") + "</span>";
 
-                        $("#day" + i).html("<div id='dayHeader'><div class='day_title'>" + dayTitle + "</div></div><div id='dayContent'></div>");
-                        $("#day" + i).removeClass("today").removeClass("monthfirst").addClass("day");
+                        dayCell.html("<div id='dayHeader'><div class='day_title'>" + dayTitle + "</div></div><div id='dayContent'></div>");
+                        dayCell.removeClass("today").removeClass("monthfirst").addClass("day");
+                        $(".calendar").append(dayCell);
 
                         // build cell content
                         let content = "";
