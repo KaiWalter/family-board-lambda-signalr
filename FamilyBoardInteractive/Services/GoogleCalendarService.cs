@@ -5,6 +5,7 @@ using Google.Apis.Services;
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 namespace FamilyBoardInteractive.Services
 {
@@ -49,7 +50,7 @@ namespace FamilyBoardInteractive.Services
             CalendarId = calendarId;
         }
 
-        public List<Models.CalendarEntry> GetEvents(DateTime startDate, DateTime endDate)
+        public async Task<List<Models.CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate)
         {
             List<Models.CalendarEntry> eventResults = new List<Models.CalendarEntry>();
 
@@ -62,7 +63,7 @@ namespace FamilyBoardInteractive.Services
             request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
 
             // List events.
-            Events events = request.Execute();
+            Events events = await request.ExecuteAsync();
             if (events.Items != null && events.Items.Count > 0)
             {
                 foreach (var eventItem in events.Items)
@@ -74,7 +75,7 @@ namespace FamilyBoardInteractive.Services
             return eventResults;
         }
 
-        public List<Models.CalendarEntry> GetEventsSample()
+        public async Task<List<Models.CalendarEntry>> GetEventsSample()
         {
             List<Models.CalendarEntry> eventResults = new List<Models.CalendarEntry>();
 
@@ -87,7 +88,7 @@ namespace FamilyBoardInteractive.Services
             request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
 
             // List events.
-            Events events = request.Execute();
+            Events events = await request.ExecuteAsync();
             if (events.Items != null && events.Items.Count > 0)
             {
                 foreach (var eventItem in events.Items)

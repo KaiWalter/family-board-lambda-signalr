@@ -16,8 +16,8 @@ namespace FamilyBoardInteractive.Models
         [JsonProperty("allDayEvent")]
         public bool AllDayEvent { get; set; }
         [JsonProperty("publicHoliday")]
-        public bool publicHoliday { get; set; }
+        public bool PublicHoliday { get; set; }
         [JsonProperty("schoolHoliday")]
-        public bool schoolHoliday { get; set; }
+        public bool SchoolHoliday { get; set; }
     }
 }

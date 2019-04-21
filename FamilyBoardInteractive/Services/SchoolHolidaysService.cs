@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using FamilyBoardInteractive.Models;
 
 namespace FamilyBoardInteractive.Services
@@ -12,12 +13,12 @@ namespace FamilyBoardInteractive.Services
 
         }
 
-        public List<CalendarEntry> GetEvents(DateTime startDate, DateTime endDate)
+        public async Task<List<CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate)
         {
             throw new NotImplementedException();
         }
 
-        public List<CalendarEntry> GetEventsSample()
+        public async Task<List<CalendarEntry>> GetEventsSample()
         {
             throw new NotImplementedException();
         }

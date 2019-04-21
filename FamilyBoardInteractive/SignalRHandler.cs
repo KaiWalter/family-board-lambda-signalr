@@ -40,13 +40,13 @@ namespace FamilyBoardInteractive
         }
 
         [FunctionName(nameof(UpdateCalendar))]
-        public static Task UpdateCalendar(
+        public static async Task<IAsyncCollector<SignalRMessage>> UpdateCalendar(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post")]object message,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = GetCalendars();
+            var events = await GetCalendars();
 
-            return signalRMessages.AddAsync(
+            return (IAsyncCollector<SignalRMessage>)signalRMessages.AddAsync(
                 new SignalRMessage
                 {
                     Target = SIGNALRMESSAGEUPDATECALENDER,
@@ -108,13 +108,13 @@ namespace FamilyBoardInteractive
             pushImageMessage = $"scheduled {DateTime.UtcNow.ToString("u")}";
         }
 
-        private static System.Collections.Generic.List<Models.CalendarEntry> GetCalendars()
+        private static async Task<System.Collections.Generic.List<Models.CalendarEntry>> GetCalendars()
         {
             var start = DateTime.Now.Date;
             var end = DateTime.Now.Date.AddDays(Constants.CalendarWeeks * 7);
 
             var calendarService = new GoogleCalendarService();
-            var events = calendarService.GetEvents(start, end);
+            var events = await calendarService.GetEvents(start, end);
 
             return events;
         }

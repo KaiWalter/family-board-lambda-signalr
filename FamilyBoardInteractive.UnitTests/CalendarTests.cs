@@ -1,6 +1,7 @@
 using FamilyBoardInteractive.Services;
 using NUnit.Framework;
 using System;
+using System.Threading.Tasks;
 
 namespace FamilyBoardInteractive.UnitTests
 {
@@ -30,7 +31,7 @@ namespace FamilyBoardInteractive.UnitTests
         }
 
         [Test]
-        public void TestGoogleCalendarService1Week()
+        public async Task TestGoogleCalendarService1Week()
         {
             // arrange
             var service = new GoogleCalendarService(
@@ -43,7 +44,7 @@ namespace FamilyBoardInteractive.UnitTests
             var end = DateTime.Now.Date.AddDays(7);
 
             // act
-            var result = service.GetEvents(start, end);
+            var result = await service.GetEvents(start, end);
 
             // assert
             Assert.IsNotNull(result);
@@ -51,19 +52,19 @@ namespace FamilyBoardInteractive.UnitTests
         }
 
         [Test]
-        public void TestHolidaysService1Week()
+        public async Task TestPublicHolidaysServiceYearCutOver()
         {
             // arrange
-            var service = new SchoolHolidaysService();
-            var start = DateTime.Now.Date;
-            var end = DateTime.Now.Date.AddDays(7);
+            var service = new PublicHolidaysService();
+            var start = new DateTime(2018,12,23);
+            var end = new DateTime(2019,1,2);
 
             // act
-            var result = service.GetEvents(start, end);
+            var result = await service.GetEvents(start, end);
 
             // assert
             Assert.IsNotNull(result);
-            Assert.Greater(result.Count, 0);
+            Assert.AreEqual(result.Count, 3);
         }
     }
 }
