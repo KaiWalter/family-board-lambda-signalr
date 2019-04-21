@@ -17,3 +17,8 @@ Front-end is based on static pages which are hosted from Consumption Plan Azure 
 For basic protection `index.html` can only be opened with a Azure Functions key: `https://{function-app}.azurewebsites.net/index.html?code={key}`. All other static content is not protected.
 
 ...to be continued...
+
+## Limitations
+
+- currently only fix 3 weeks model
+- only German weekdays from Monday to Sunday

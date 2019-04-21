@@ -144,9 +144,15 @@
 
                 let wd = current.getDay();
                 let firstDate = currentDate();
+                // flip week on Sunday
+                if (wd === 0) {
+                    firstDate = addDays(firstDate, -1);
+                    wd = firstDate.getDay();
+                }
+                // find Monday
                 while (wd > 1) {
-                    wd--;
-                    firstDate.setDate(firstDate.getDate() - 1);
+                    firstDate = addDays(firstDate, -1);
+                    wd = firstDate.getDay();
                 }
 
                 // fill calendar
