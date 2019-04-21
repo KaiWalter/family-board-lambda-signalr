@@ -19,6 +19,7 @@
     <div class="board">
 
         <div id="imageContainer" style="overflow: hidden;">
+            <div class="clock"></div>
         </div>
 
         <div class="main">
@@ -104,6 +105,7 @@
 
             connection.start().then(function () {
                 console.log("connected");
+                startTime();
             });
 
             connection.on('newMessage', newMessage);
@@ -126,6 +128,23 @@
                         $("#message").html("");
                     }, timeoutSecs * 1000);
                 }
+            }
+
+            // --------------------------------------------------------------------------------
+            // clock
+            function startTime() {
+                var today = new Date();
+                var h = today.getHours();
+                var m = today.getMinutes();
+                var s = today.getSeconds();
+                m = checkTime(m);
+                s = checkTime(s);
+                $(".clock").html(h + ":" + m + "<span class='sec'>" + s + "</span>");
+                var t = setTimeout(startTime, 500);
+            }
+            function checkTime(i) {
+                if (i < 10) { i = "0" + i };  // add zero in front of numbers < 10
+                return i;
             }
 
             // --------------------------------------------------------------------------------
@@ -159,13 +178,16 @@
                 let iDate = currentDate();
 
                 for (i = 0; i < 21; i++) {
-                    iDate = addDays(firstDate, i);
+                    let iDate = addDays(firstDate, i);
+                    let isToday = iDate.toISOString() === current.toISOString();
 
                     // reset cell
-                    let dayTitle = "<span class='dayofmonth'>" + iDate.getDate() +"</span>";
-                    if (iDate.getDay() == 1 || iDate.getDate() == 1) {
+                    let dayTitle = "<span class='dayofmonth'>" + iDate.getDate() + "</span>";
+                    if (iDate.getDay() == 1 ||
+                        iDate.getDate() == 1 ||
+                        isToday) {
                         let monthNames = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
-                        dayTitle = "<span class='monthofyear'>" + monthNames[iDate.getMonth()-1] + "</span><br/>" + dayTitle;
+                        dayTitle = "<span class='monthofyear'>" + monthNames[iDate.getMonth()] + "</span><br/>" + dayTitle;
                     } else {
                         dayTitle = "<span class='monthofyear'></span><br/>" + dayTitle;
                     }
@@ -193,7 +215,7 @@
 
                     $("#day" + i + " > #dayContent").html(content);
 
-                    if (iDate.toISOString() === current.toISOString()) {
+                    if (isToday) {
                         $("#day" + i).toggleClass("today");
                     }
                 }
