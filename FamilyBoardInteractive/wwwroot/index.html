@@ -172,7 +172,8 @@
                             if (iDateFormatted === entry.date && entry.allDayEvent) {
                                 if (entry.publicHoliday) {
                                     content += "<div class='public_holiday_day'>" + entry.description + "</div>";
-
+                                } else if (entry.schoolHoliday) {
+                                    content += "<div class='school_holiday_day'>" + entry.description + "</div>";
                                 } else {
                                     content += "<div class='all_day'>" + entry.description + "</div>";
                                 }

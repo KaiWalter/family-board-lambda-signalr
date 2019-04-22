@@ -1,9 +1,11 @@
-﻿using FamilyBoardInteractive.Services;
+﻿using FamilyBoardInteractive.Models;
+using FamilyBoardInteractive.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.SignalRService;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace FamilyBoardInteractive
@@ -115,8 +117,14 @@ namespace FamilyBoardInteractive
 
             var events = new System.Collections.Generic.List<Models.CalendarEntry>();
 
+            var holidays = new System.Collections.Generic.List<Models.CalendarEntry>();
+
+            // combine public and school holidays
             var publicHolidaysService = new PublicHolidaysService();
-            events.AddRange(await publicHolidaysService.GetEvents(start, end));
+            var schoolHolidaysService = new SchoolHolidaysService();
+            holidays.AddRange(await publicHolidaysService.GetEvents(start, end));
+            //holidays.AddRange(await schoolHolidaysService.GetEvents(start, end));
+            events.AddRange(holidays.GroupBy(x => x.Date).Select(y => y.First()).ToList<CalendarEntry>());
 
             var googleCalendarService = new GoogleCalendarService();
             events.AddRange(await googleCalendarService.GetEvents(start, end));

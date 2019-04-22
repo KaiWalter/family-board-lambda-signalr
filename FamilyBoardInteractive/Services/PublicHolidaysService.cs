@@ -36,6 +36,15 @@ namespace FamilyBoardInteractive.Services
             return result;
         }
 
+        public async Task<List<CalendarEntry>> GetEventsSample()
+        {
+            var result = new List<CalendarEntry>();
+
+            result.AddRange(await GetHolidaysForYear(DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow.Year));
+
+            return result;
+        }
+
         private static async Task<List<CalendarEntry>> GetHolidaysForYear(DateTime startDate, DateTime endDate, int year)
         {
             var startDateISO = startDate.ToString("s", System.Globalization.CultureInfo.InvariantCulture).Substring(0, 10);
@@ -72,14 +81,5 @@ namespace FamilyBoardInteractive.Services
             return yearResult;
         }
 
-        public async Task<List<CalendarEntry>> GetEventsSample()
-        {
-            var result = new List<CalendarEntry>();
-
-            result.AddRange(await GetHolidaysForYear(DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow.Year));
-
-            return result;
-
-        }
     }
 }

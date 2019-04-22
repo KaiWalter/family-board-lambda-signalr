@@ -66,5 +66,21 @@ namespace FamilyBoardInteractive.UnitTests
             Assert.IsNotNull(result);
             Assert.AreEqual(result.Count, 3);
         }
+
+        [Test]
+        public async Task TestSchoolHolidaysServiceEaster2019()
+        {
+            // arrange
+            var service = new SchoolHolidaysService();
+            var start = new DateTime(2019, 4, 1);
+            var end = new DateTime(2019, 5, 1);
+
+            // act
+            var result = await service.GetEvents(start, end);
+
+            // assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(result.Count, 14);
+        }
     }
 }
