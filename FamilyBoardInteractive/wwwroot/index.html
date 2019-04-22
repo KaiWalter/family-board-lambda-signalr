@@ -170,7 +170,12 @@
                         // render all day events always on top
                         events.forEach((entry) => {
                             if (iDateFormatted === entry.date && entry.allDayEvent) {
-                                content += "<div class='all_day'>" + entry.description + "</div>";
+                                if (entry.publicHoliday) {
+                                    content += "<div class='public_holiday_day'>" + entry.description + "</div>";
+
+                                } else {
+                                    content += "<div class='all_day'>" + entry.description + "</div>";
+                                }
                             }
                         });
 
