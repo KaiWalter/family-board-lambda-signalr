@@ -16,7 +16,7 @@ namespace FamilyBoardInteractive
         [FunctionName("Health")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            [Table("Tokens", partitionKey: "Token", rowKey: "MSA")] MSAToken msaToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
             ILogger log)
         {
             string googleCalendarResult;

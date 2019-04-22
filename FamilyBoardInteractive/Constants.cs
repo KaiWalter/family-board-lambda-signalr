@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FamilyBoardInteractive
+﻿namespace FamilyBoardInteractive
 {
     public static class Constants
     {
@@ -17,5 +13,9 @@ namespace FamilyBoardInteractive
         public const string QUEUEMESSAGEPUSHIMAGE = "pushimage";
 
         public const string BLOBPATHBOARDIMAGE = "images/boardimage.jpg";
+
+        public const string TOKEN_TABLE = "Tokens";
+        public const string TOKEN_PARTITIONKEY = "Token";
+        public const string MSATOKEN_ROWKEY = "MSA";
     }
 }

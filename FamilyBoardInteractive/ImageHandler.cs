@@ -47,7 +47,7 @@ namespace FamilyBoardInteractive
         [Singleton(Mode = SingletonMode.Listener)]
         public static async Task QueuedPushNextImage(
             [QueueTrigger(Constants.QUEUEMESSAGEPUSHIMAGE)]string queueMessage,
-            [Table("Tokens", partitionKey: "Token", rowKey: "MSA")] MSAToken msaToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
             [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
             [Blob(Constants.BLOBPATHBOARDIMAGE, access: FileAccess.Write)] CloudBlockBlob outputBlob,
             ILogger log)
@@ -65,7 +65,7 @@ namespace FamilyBoardInteractive
         [FunctionName(nameof(PushNextImage))]
         public static async Task<IActionResult> PushNextImage(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            [Table("Tokens", partitionKey: "Token", rowKey: "MSA")] MSAToken msaToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
             [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
             [Blob(Constants.BLOBPATHBOARDIMAGE, access: FileAccess.Write)] CloudBlockBlob outputBlob,
             ILogger log)
@@ -94,8 +94,8 @@ namespace FamilyBoardInteractive
                 var imageListResponse = await client.SendAsync(imageListRequest);
                 if (imageListResponse.IsSuccessStatusCode)
                 {
-                    var imageListString = await imageListResponse.Content.ReadAsStringAsync();
-                    var imageList = (JArray)JObject.Parse(imageListString)["value"];
+                    var imageListPayload = await imageListResponse.Content.ReadAsStringAsync();
+                    var imageList = (JArray)JObject.Parse(imageListPayload)["value"];
 
                     JObject imageObject = FindRandomImage(imageList);
 

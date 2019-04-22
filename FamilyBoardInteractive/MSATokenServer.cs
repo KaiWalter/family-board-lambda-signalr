@@ -19,7 +19,7 @@ namespace FamilyBoardInteractive
         [return: Table("Tokens")]
         public static async Task<MSAToken> StoreMSAToken(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
-            [Table("Tokens", partitionKey: "Token", rowKey: "MSA")] MSAToken inputToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken inputToken,
             ILogger log)
         {
             string code = req.Query["code"];
@@ -52,7 +52,7 @@ namespace FamilyBoardInteractive
         [return: Table("Tokens")]
         public static async Task<MSAToken> RefreshMSAToken(
             [QueueTrigger(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] string queueMessage,
-            [Table("Tokens", partitionKey: "Token", rowKey: "MSA")] MSAToken inputToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken inputToken,
             ILogger log)
         {
             if (inputToken?.RefreshToken == null)

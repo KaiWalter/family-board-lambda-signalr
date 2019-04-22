@@ -44,9 +44,10 @@ namespace FamilyBoardInteractive
         [FunctionName(nameof(UpdateCalendar))]
         public static Task UpdateCalendar(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post")]object message,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = GetCalendars().GetAwaiter().GetResult();
+            var events = GetCalendars(msaToken).GetAwaiter().GetResult();
 
             return signalRMessages.AddAsync(
                 new SignalRMessage
@@ -70,9 +71,10 @@ namespace FamilyBoardInteractive
         [Singleton(Mode = SingletonMode.Listener)]
         public static Task QueuedCalendarUpdate(
             [QueueTrigger(Constants.QUEUEMESSAGEUPDATECALENDER)]string queueMessage,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = GetCalendars().GetAwaiter().GetResult();
+            var events = GetCalendars(msaToken).GetAwaiter().GetResult();
 
             return signalRMessages.AddAsync(
                 new SignalRMessage
@@ -113,7 +115,7 @@ namespace FamilyBoardInteractive
             pushImageMessage = $"scheduled {DateTime.UtcNow.ToString("u")}";
         }
 
-        private static async Task<System.Collections.Generic.List<Models.CalendarEntry>> GetCalendars()
+        private static async Task<System.Collections.Generic.List<Models.CalendarEntry>> GetCalendars(MSAToken msaToken)
         {
             var start = DateTime.Now.Date.AddDays(-7);
             var end = DateTime.Now.Date.AddDays(Constants.CalendarWeeks * 7);
@@ -136,6 +138,10 @@ namespace FamilyBoardInteractive
                 var googleCalendarService = new GoogleCalendarService();
                 var googleEvents = await googleCalendarService.GetEvents(start, end);
                 events.AddRange(googleEvents);
+
+                var outlookCalendarService = new OutlookCalendarService(msaToken);
+                var outlookEvents = await outlookCalendarService.GetEvents(start, end);
+                events.AddRange(outlookEvents);
             }
             catch (Exception ex)
             {

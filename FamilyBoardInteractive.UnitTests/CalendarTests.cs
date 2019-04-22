@@ -1,3 +1,4 @@
+using FamilyBoardInteractive.Models;
 using FamilyBoardInteractive.Services;
 using NUnit.Framework;
 using System;
@@ -42,6 +43,29 @@ namespace FamilyBoardInteractive.UnitTests
 
             var start = DateTime.Now.Date;
             var end = DateTime.Now.Date.AddDays(7);
+
+            // act
+            var result = await service.GetEvents(start, end);
+
+            // assert
+            Assert.IsNotNull(result);
+            Assert.Greater(result.Count, 0);
+        }
+
+        [Test]
+        public async Task TestOutlookCalendarService1Week()
+        {
+            // arrange
+            var service = new OutlookCalendarService(
+                    msaToken: new MSAToken()
+                    {
+                        TokenType = "bearer",
+                        AccessToken = TestContext.Parameters["OUTLOOK_TEST_TOKEN"]
+                    }
+                );
+
+            var start = new DateTime(2019, 4, 22);
+            var end = new DateTime(2019, 5, 25);
 
             // act
             var result = await service.GetEvents(start, end);
