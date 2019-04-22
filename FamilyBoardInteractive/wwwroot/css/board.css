@@ -101,7 +101,7 @@ body {
 
 .public_holiday_day {
     background-color: darkgray;
-    color: ghostwhite;
+    color: black;
     border: 1px solid white;
     font-size: medium;
     text-align: center;
@@ -114,7 +114,7 @@ body {
 
 .school_holiday_day {
     background-color: darkgray;
-    color: ghostwhite;
+    color: black;
     border: 1px solid white;
     font-size: small;
     text-align: center;
