@@ -1,9 +1,11 @@
-﻿using FamilyBoardInteractive.Services;
+﻿using FamilyBoardInteractive.Models;
+using FamilyBoardInteractive.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.SignalRService;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace FamilyBoardInteractive
@@ -44,7 +46,7 @@ namespace FamilyBoardInteractive
             [HttpTrigger(AuthorizationLevel.Anonymous, "post")]object message,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = GetCalendars();
+            var events = GetCalendars().GetAwaiter().GetResult();
 
             return signalRMessages.AddAsync(
                 new SignalRMessage
@@ -55,6 +57,7 @@ namespace FamilyBoardInteractive
         }
 
         [FunctionName(nameof(QueuedBoardUpdate))]
+        [Singleton(Mode = SingletonMode.Listener)]
         public static void QueuedBoardUpdate(
             [QueueTrigger(QUEUEMESSAGEBOARDUPDATE)]string queueMessage,
             [Queue(Constants.QUEUEMESSAGEUPDATECALENDER)]out string updateCalendarMessage,
@@ -64,11 +67,12 @@ namespace FamilyBoardInteractive
         }
 
         [FunctionName(nameof(QueuedCalendarUpdate))]
+        [Singleton(Mode = SingletonMode.Listener)]
         public static Task QueuedCalendarUpdate(
             [QueueTrigger(Constants.QUEUEMESSAGEUPDATECALENDER)]string queueMessage,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = GetCalendars();
+            var events = GetCalendars().GetAwaiter().GetResult();
 
             return signalRMessages.AddAsync(
                 new SignalRMessage
@@ -80,6 +84,7 @@ namespace FamilyBoardInteractive
 
 
         [FunctionName(nameof(QueuedImageUpdate))]
+        [Singleton(Mode = SingletonMode.Listener)]
         public static Task QueuedImageUpdate(
             [QueueTrigger(Constants.QUEUEMESSAGEUPDATEIMAGE)]string queueMessage,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
@@ -108,13 +113,34 @@ namespace FamilyBoardInteractive
             pushImageMessage = $"scheduled {DateTime.UtcNow.ToString("u")}";
         }
 
-        private static System.Collections.Generic.List<Models.CalendarEntry> GetCalendars()
+        private static async Task<System.Collections.Generic.List<Models.CalendarEntry>> GetCalendars()
         {
-            var start = DateTime.Now.Date;
+            var start = DateTime.Now.Date.AddDays(-7);
             var end = DateTime.Now.Date.AddDays(Constants.CalendarWeeks * 7);
 
-            var calendarService = new GoogleCalendarService();
-            var events = calendarService.GetEvents(start, end);
+            var events = new System.Collections.Generic.List<CalendarEntry>();
+
+            try
+            {
+                var holidays = new System.Collections.Generic.List<CalendarEntry>();
+
+                // combine public and school holidays
+                var publicHolidaysService = new PublicHolidaysService();
+                var schoolHolidaysService = new SchoolHolidaysService();
+
+                holidays.AddRange(await publicHolidaysService.GetEvents(start, end));
+                //holidays.AddRange(await schoolHolidaysService.GetEvents(start, end));
+                var deduplicatedHolidays = holidays.GroupBy(x => x.Date).Select(y => y.First()).ToList<CalendarEntry>();
+                events.AddRange(deduplicatedHolidays);
+
+                var googleCalendarService = new GoogleCalendarService();
+                var googleEvents = await googleCalendarService.GetEvents(start, end);
+                events.AddRange(googleEvents);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
 
             return events;
         }

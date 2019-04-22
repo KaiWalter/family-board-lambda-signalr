@@ -48,6 +48,7 @@ namespace FamilyBoardInteractive
         }
 
         [FunctionName(nameof(RefreshMSAToken))]
+        [Singleton(Mode = SingletonMode.Listener)]
         [return: Table("Tokens")]
         public static async Task<MSAToken> RefreshMSAToken(
             [QueueTrigger(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] string queueMessage,
@@ -57,6 +58,11 @@ namespace FamilyBoardInteractive
             if (inputToken?.RefreshToken == null)
             {
                 throw new ArgumentNullException($"{nameof(RefreshMSAToken)} {nameof(inputToken.RefreshToken)}");
+            }
+
+            if (DateTime.UtcNow < inputToken.Expires.AddMinutes(5)) // token still valid
+            {
+                return null;
             }
 
             var tokenCreated = DateTime.UtcNow;

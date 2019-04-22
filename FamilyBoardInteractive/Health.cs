@@ -7,13 +7,14 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace FamilyBoardInteractive
 {
     public static class Health
     {
         [FunctionName("Health")]
-        public static IActionResult Run(
+        public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
             [Table("Tokens", partitionKey: "Token", rowKey: "MSA")] MSAToken msaToken,
             ILogger log)
@@ -24,7 +25,7 @@ namespace FamilyBoardInteractive
             try
             {
                 var calenderService = new GoogleCalendarService();
-                var result = calenderService.GetEventsSample();
+                var result = await calenderService.GetEventsSample();
                 googleCalendarResult = result?.Count.ToString() ?? "empty resultset";
                 log.LogInformation(googleCalendarResult);
             }

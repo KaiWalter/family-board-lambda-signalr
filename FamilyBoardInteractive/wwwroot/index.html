@@ -73,7 +73,7 @@
                 $("#message").html(message);
                 if (timeoutSecs) {
                     setTimeout(() => {
-                        $("#message").html("");
+                        $("#message").empty();
                     }, timeoutSecs * 1000);
                 }
             }
@@ -101,6 +101,12 @@
                     tdt.setMonth(0, 1 + ((4 - tdt.getDay()) + 7) % 7);
                 }
                 return 1 + Math.ceil((firstThursday - tdt) / 604800000);
+            }
+
+            function ISO8601_date(dt) {
+                return dt.getFullYear().toString() + "-" +
+                    (dt.getMonth() + 1).toString().padStart(2, "0") + "-" +
+                    dt.getDate().toString().padStart(2, "0");
             }
 
             function addDays(date, days) {
@@ -136,7 +142,7 @@
                     for (wd = 0; wd < 7; wd++) {
                         let i = (w * 7) + wd;
                         let iDate = addDays(firstDate, i);
-                        let isToday = iDate.toISOString() === current.toISOString();
+                        let isToday = ISO8601_date(iDate) === ISO8601_date(current);
 
                         // handle week number
                         if (wd === 0) {
@@ -165,12 +171,18 @@
                         // build cell content
                         let content = "";
 
-                        let iDateFormatted = iDate.toISOString().split('T')[0];
+                        let iDateFormatted = ISO8601_date(iDate);
 
                         // render all day events always on top
                         events.forEach((entry) => {
                             if (iDateFormatted === entry.date && entry.allDayEvent) {
-                                content += "<div class='all_day'>" + entry.description + "</div>";
+                                if (entry.publicHoliday) {
+                                    content += "<div class='public_holiday_day'>" + entry.description + "</div>";
+                                } else if (entry.schoolHoliday) {
+                                    content += "<div class='school_holiday_day'>" + entry.description + "</div>";
+                                } else {
+                                    content += "<div class='all_day'>" + entry.description + "</div>";
+                                }
                             }
                         });
 
