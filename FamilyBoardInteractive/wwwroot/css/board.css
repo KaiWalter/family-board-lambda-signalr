@@ -51,9 +51,10 @@ body {
 }
 
 .week_title {
-    font-size: 1.2em;
+    font-size: large;
+    line-height: 0.8em;
+    margin-top: 1px;
     margin-left: 15px;
-    margin-top: 90px;
     padding: 0 0 0 0;
 }
 
