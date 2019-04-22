@@ -3,8 +3,8 @@ body {
     background-color: black;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: white;
-    margin: 0 !important;
-    padding: 0 !important;
+    margin: 0 0 0 0 !important;
+    padding: 0 0 0 0 !important;
 }
 
 .board {
@@ -19,23 +19,6 @@ body {
     margin-left: 10px;
     grid-template-columns: auto;
     grid-template-rows: auto 30px;
-}
-
-.calendar {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: 60px repeat(3, 1fr);
-}
-
-.weekday {
-    text-align: center;
-    font-size: 2em;
-}
-
-.day {
-    font-size: 1em;
-    margin-left: 3px;
-    margin-right: 3px;
 }
 
 .clock {
@@ -55,6 +38,25 @@ body {
         top: -1em;
     }
 
+.calendar {
+    display: grid;
+    grid-template-columns: 1fr repeat(7, 3fr);
+    grid-template-rows: repeat(3, 1fr);
+}
+
+.day {
+    font-size: 1em;
+    margin-left: 3px;
+    margin-right: 3px;
+}
+
+.week_title {
+    font-size: 1.2em;
+    margin-left: 15px;
+    margin-top: 90px;
+    padding: 0 0 0 0;
+}
+
 .today {
     font-size: 1em;
     background-color: dimgray;
@@ -73,8 +75,12 @@ body {
         font-size: x-large;
     }
 
-    .day_title .monthofyear {
+    .day_title .dayofweek {
         font-size: large;
+    }
+
+    .day_title .monthofyear {
+        font-size: x-large;
     }
 
 .single_event {
@@ -83,7 +89,7 @@ body {
 }
 
 .all_day {
-    background-color: white;
+    background-color: lightgray;
     color: black;
     font-size: medium;
     line-height: 2em;
