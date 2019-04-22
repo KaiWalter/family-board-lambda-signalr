@@ -34,6 +34,12 @@ namespace FamilyBoardInteractive.Services
             var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
             store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
             var certificateCollection = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
+
+            if(certificateCollection.Count < 1)
+            {
+                throw new ApplicationException($"Google Service Account certificate with tumbprint {certificateThumbprint} not found.");
+            }
+
             var certificate = certificateCollection[0];
 
             var credential = new ServiceAccountCredential(new ServiceAccountCredential.Initializer(serviceAccount)

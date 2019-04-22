@@ -57,6 +57,7 @@ namespace FamilyBoardInteractive
         }
 
         [FunctionName(nameof(QueuedBoardUpdate))]
+        [Singleton(Mode = SingletonMode.Listener)]
         public static void QueuedBoardUpdate(
             [QueueTrigger(QUEUEMESSAGEBOARDUPDATE)]string queueMessage,
             [Queue(Constants.QUEUEMESSAGEUPDATECALENDER)]out string updateCalendarMessage,
@@ -66,6 +67,7 @@ namespace FamilyBoardInteractive
         }
 
         [FunctionName(nameof(QueuedCalendarUpdate))]
+        [Singleton(Mode = SingletonMode.Listener)]
         public static Task QueuedCalendarUpdate(
             [QueueTrigger(Constants.QUEUEMESSAGEUPDATECALENDER)]string queueMessage,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
@@ -82,6 +84,7 @@ namespace FamilyBoardInteractive
 
 
         [FunctionName(nameof(QueuedImageUpdate))]
+        [Singleton(Mode = SingletonMode.Listener)]
         public static Task QueuedImageUpdate(
             [QueueTrigger(Constants.QUEUEMESSAGEUPDATEIMAGE)]string queueMessage,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
@@ -115,19 +118,29 @@ namespace FamilyBoardInteractive
             var start = DateTime.Now.Date.AddDays(-7);
             var end = DateTime.Now.Date.AddDays(Constants.CalendarWeeks * 7);
 
-            var events = new System.Collections.Generic.List<Models.CalendarEntry>();
+            var events = new System.Collections.Generic.List<CalendarEntry>();
 
-            var holidays = new System.Collections.Generic.List<Models.CalendarEntry>();
+            try
+            {
+                var holidays = new System.Collections.Generic.List<CalendarEntry>();
 
-            // combine public and school holidays
-            var publicHolidaysService = new PublicHolidaysService();
-            var schoolHolidaysService = new SchoolHolidaysService();
-            holidays.AddRange(await publicHolidaysService.GetEvents(start, end));
-            //holidays.AddRange(await schoolHolidaysService.GetEvents(start, end));
-            events.AddRange(holidays.GroupBy(x => x.Date).Select(y => y.First()).ToList<CalendarEntry>());
+                // combine public and school holidays
+                var publicHolidaysService = new PublicHolidaysService();
+                var schoolHolidaysService = new SchoolHolidaysService();
 
-            var googleCalendarService = new GoogleCalendarService();
-            events.AddRange(await googleCalendarService.GetEvents(start, end));
+                holidays.AddRange(await publicHolidaysService.GetEvents(start, end));
+                //holidays.AddRange(await schoolHolidaysService.GetEvents(start, end));
+                var deduplicatedHolidays = holidays.GroupBy(x => x.Date).Select(y => y.First()).ToList<CalendarEntry>();
+                events.AddRange(deduplicatedHolidays);
+
+                var googleCalendarService = new GoogleCalendarService();
+                var googleEvents = await googleCalendarService.GetEvents(start, end);
+                events.AddRange(googleEvents);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
 
             return events;
         }

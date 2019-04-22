@@ -24,6 +24,7 @@ namespace FamilyBoardInteractive
         const string ONEDRIVEPATH = "https://graph.microsoft.com/v1.0/me/drive/root:/{0}:/children";
 
         [FunctionName(nameof(QueueSasUrlForImageBlob))]
+        [Singleton(Mode = SingletonMode.Listener)]
         public static async Task QueueSasUrlForImageBlob(
             [BlobTrigger(Constants.BLOBPATHBOARDIMAGE)] CloudBlockBlob imageBlob,
             [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
@@ -33,7 +34,6 @@ namespace FamilyBoardInteractive
             sasConstraints.SharedAccessExpiryTime = DateTimeOffset.UtcNow.AddMinutes(1); ;
             sasConstraints.Permissions = SharedAccessBlobPermissions.Read;
             string sasContainerToken = imageBlob.GetSharedAccessSignature(sasConstraints);
-            log.LogInformation(imageBlob.Uri + sasContainerToken);
 
             var imageObject = new JObject()
             {
@@ -44,6 +44,7 @@ namespace FamilyBoardInteractive
         }
 
         [FunctionName(nameof(QueuedPushNextImage))]
+        [Singleton(Mode = SingletonMode.Listener)]
         public static async Task QueuedPushNextImage(
             [QueueTrigger(Constants.QUEUEMESSAGEPUSHIMAGE)]string queueMessage,
             [Table("Tokens", partitionKey: "Token", rowKey: "MSA")] MSAToken msaToken,
@@ -63,7 +64,7 @@ namespace FamilyBoardInteractive
 
         [FunctionName(nameof(PushNextImage))]
         public static async Task<IActionResult> PushNextImage(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
             [Table("Tokens", partitionKey: "Token", rowKey: "MSA")] MSAToken msaToken,
             [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
             [Blob(Constants.BLOBPATHBOARDIMAGE, access: FileAccess.Write)] CloudBlockBlob outputBlob,
@@ -80,39 +81,6 @@ namespace FamilyBoardInteractive
 
             return new OkResult();
         }
-
-        //private static async Task<string> GetNextImage(MSAToken msaToken, IAsyncCollector<string> updateImageMessage)
-        //{
-        //    string result = string.Empty;
-
-        //    using (var client = new HttpClient())
-        //    {
-        //        var imageListRequest = new HttpRequestMessage(HttpMethod.Get, string.Format(ONEDRIVEPATH, "Dakboard"));
-        //        imageListRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(msaToken.TokenType, msaToken.AccessToken);
-
-        //        var imageListResponse = await client.SendAsync(imageListRequest);
-        //        if (imageListResponse.IsSuccessStatusCode)
-        //        {
-        //            var imageListString = await imageListResponse.Content.ReadAsStringAsync();
-        //            var imageList = (JArray)JObject.Parse(imageListString)["value"];
-
-        //            JObject imageObject = FindRandomImage(imageList);
-
-        //            var imagePath = imageObject["@microsoft.graph.downloadUrl"].Value<string>();
-
-        //            var imageData = new JObject();
-        //            imageData["path"] = imageObject["@microsoft.graph.downloadUrl"];
-        //            imageData["specs"] = imageObject["image"];
-        //            imageData["photoSpecs"] = imageObject["photo"];
-
-        //            await updateImageMessage.AddAsync(imageData.ToString());
-
-        //            result = $"image pushed {imagePath}";
-        //        }
-        //    }
-
-        //    return result;
-        //}
 
         private static async Task<Stream> GetNextBlobImage(MSAToken msaToken)
         {
