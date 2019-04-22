@@ -147,7 +147,7 @@
                         // handle week number
                         if (wd === 0) {
                             let weekNoDiv = $("<div/>");
-                            let weekNoTitle = ISO8601_week_no(iDate).toString().padStart(2, "0");
+                            let weekNoTitle = "<br/><br/><br/>" + ISO8601_week_no(iDate).toString().padStart(2, "0");
                             weekNoDiv.addClass("week_title").html(weekNoTitle);
                             $(".calendar").append(weekNoDiv);
                         }
@@ -155,14 +155,15 @@
                         // reset cell
                         let dayCell = $("<div/>");
                         dayCell.attr("id", "day" + i).addClass("day");
-                        let monthTitle = "";
+                        let monthTitle = null;
+                        let dayTitle =
+                            "<span class='dayofweek'>" + weekDayNames[wd] + "</span><br/>" +
+                            "<span class='dayofmonth'>" + iDate.getDate().toString().padStart(2, "0") + ".</span>";
                         // month name on first element or first of month
                         if (i === 0 || iDate.getDate() == 1) {
-                            monthTitle = monthNames[iDate.getMonth()];
+                            let monthTitle = monthNames[iDate.getMonth()];
+                            dayTitle = dayTitle + "<span class='monthofyear'>&nbsp;" + monthTitle + "</span>";
                         }
-                        let dayTitle = "<span class='monthofyear'>" + monthTitle + "</span><br/>" +
-                            "<span class='dayofweek'>" + weekDayNames[wd] + "</span><br/>" +
-                            "<span class='dayofmonth'>" + iDate.getDate().toString().padStart(2, "0") + "</span>";
 
                         dayCell.html("<div id='dayHeader'><div class='day_title'>" + dayTitle + "</div></div><div id='dayContent'></div>");
                         dayCell.removeClass("today").removeClass("monthfirst").addClass("day");
