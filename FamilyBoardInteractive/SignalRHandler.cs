@@ -139,7 +139,7 @@ namespace FamilyBoardInteractive
                 var googleEvents = await googleCalendarService.GetEvents(start, end);
                 events.AddRange(googleEvents);
 
-                var outlookCalendarService = new OutlookCalendarService(msaToken);
+                var outlookCalendarService = new OutlookCalendarService(msaToken, Util.GetEnvironmentVariable("OUTLOOK_TIMEZONE"));
                 var outlookEvents = await outlookCalendarService.GetEvents(start, end);
                 events.AddRange(outlookEvents);
             }

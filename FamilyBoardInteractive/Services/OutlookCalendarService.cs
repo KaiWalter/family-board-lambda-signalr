@@ -10,16 +10,19 @@ namespace FamilyBoardInteractive.Services
 {
     public class OutlookCalendarService : ICalendarService
     {
-        const string OUTLOOKURL = "https://graph.microsoft.com/v1.0/me/calendar/calendarView?startDateTime={0}&endDateTime={1}";
+        const string OUTLOOKURL = "https://graph.microsoft.com/v1.0/me/calendar/calendarView?startDateTime={0}&endDateTime={1}&$select=subject,isAllDay,start,end";
 
         MSAToken MSAToken;
 
-        public OutlookCalendarService()
-        {
+        public string OutlookTimeZone { get; set; }
 
+        public OutlookCalendarService(string outlookTimeZone = null)
+        {
+            OutlookTimeZone = outlookTimeZone ?? "W. Europe Standard Time";
         }
 
-        public OutlookCalendarService(MSAToken msaToken)
+        public OutlookCalendarService(MSAToken msaToken, string outlookTimeZone = null)
+            : this(outlookTimeZone)
         {
             MSAToken = msaToken;
         }
@@ -32,6 +35,7 @@ namespace FamilyBoardInteractive.Services
             {
                 var eventRequest = new HttpRequestMessage(HttpMethod.Get, string.Format(OUTLOOKURL, startDate.ToString("u").Substring(0, 10), endDate.ToString("u").Substring(0, 10)));
                 eventRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(MSAToken.TokenType, MSAToken.AccessToken);
+                eventRequest.Headers.Add("Prefer", $"outlook.timezone=\"{OutlookTimeZone}\"");
 
                 var eventResponse = await client.SendAsync(eventRequest);
                 if (eventResponse.IsSuccessStatusCode)
@@ -63,7 +67,16 @@ namespace FamilyBoardInteractive.Services
                                 eventResults.Add(eventResult);
                                 currentDT = currentDT.AddDays(1);
                             }
-
+                        }
+                        else
+                        {
+                            var eventResult = new CalendarEntry()
+                            {
+                                Date = startTime.ToString("u").Substring(0, 10),
+                                Time = startTime.Hour.ToString().PadLeft(2, '0') + ":" + startTime.Minute.ToString().PadLeft(2, '0'),
+                                Description = subject
+                            };
+                            eventResults.Add(eventResult);
                         }
                     }
                 }
