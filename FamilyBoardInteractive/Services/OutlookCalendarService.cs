@@ -14,20 +14,25 @@ namespace FamilyBoardInteractive.Services
 
         MSAToken MSAToken;
 
-        public string OutlookTimeZone { get; set; }
+        string TimeZone;
 
-        public OutlookCalendarService(string outlookTimeZone = null)
-        {
-            OutlookTimeZone = outlookTimeZone ?? "W. Europe Standard Time";
-        }
-
-        public OutlookCalendarService(MSAToken msaToken, string outlookTimeZone = null)
-            : this(outlookTimeZone)
+        public OutlookCalendarService(MSAToken msaToken, string timeZone = null)
         {
             MSAToken = msaToken;
+            TimeZone = timeZone ?? Constants.DEFAULT_TIMEZONE;
         }
 
         public async Task<List<CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate)
+        {
+            return await GetCalendar(startDate, endDate);
+        }
+
+        public async Task<List<CalendarEntry>> GetEventsSample()
+        {
+            return await GetCalendar(startDate: DateTime.UtcNow.Date, endDate: DateTime.UtcNow.Date.AddDays(7));
+        }
+
+        private async Task<List<CalendarEntry>> GetCalendar(DateTime startDate, DateTime endDate)
         {
             List<CalendarEntry> eventResults = new List<CalendarEntry>();
 
@@ -35,7 +40,7 @@ namespace FamilyBoardInteractive.Services
             {
                 var eventRequest = new HttpRequestMessage(HttpMethod.Get, string.Format(OUTLOOKURL, startDate.ToString("u").Substring(0, 10), endDate.ToString("u").Substring(0, 10)));
                 eventRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(MSAToken.TokenType, MSAToken.AccessToken);
-                eventRequest.Headers.Add("Prefer", $"outlook.timezone=\"{OutlookTimeZone}\"");
+                eventRequest.Headers.Add("Prefer", $"outlook.timezone=\"{this.TimeZone}\"");
 
                 var eventResponse = await client.SendAsync(eventRequest);
                 if (eventResponse.IsSuccessStatusCode)
@@ -43,7 +48,7 @@ namespace FamilyBoardInteractive.Services
                     var eventPayload = await eventResponse.Content.ReadAsStringAsync();
                     var eventList = (JArray)JObject.Parse(eventPayload)["value"];
 
-                    foreach(var eventToken in eventList)
+                    foreach (var eventToken in eventList)
                     {
                         var eventItem = (JObject)eventToken;
                         var subject = eventItem["subject"].Value<string>();
@@ -53,7 +58,7 @@ namespace FamilyBoardInteractive.Services
                         var end = (JObject)eventItem["end"];
                         var endTime = end["dateTime"].Value<DateTime>();
 
-                        if(isAllDay)
+                        if (isAllDay)
                         {
                             var currentDT = startTime;
                             while (currentDT < endTime)
@@ -83,11 +88,6 @@ namespace FamilyBoardInteractive.Services
             }
 
             return eventResults;
-        }
-
-        public Task<List<CalendarEntry>> GetEventsSample()
-        {
-            throw new NotImplementedException();
         }
     }
 }

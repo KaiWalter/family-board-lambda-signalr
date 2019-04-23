@@ -17,5 +17,7 @@
         public const string TOKEN_TABLE = "Tokens";
         public const string TOKEN_PARTITIONKEY = "Token";
         public const string MSATOKEN_ROWKEY = "MSA";
+
+        public const string DEFAULT_TIMEZONE = "Europe/Berlin";
     }
 }

@@ -20,11 +20,16 @@ namespace FamilyBoardInteractive
             ILogger log)
         {
             string googleCalendarResult;
+            string outlookCalendarResult;
 
             // check Google calendar
             try
             {
-                var calenderService = new GoogleCalendarService();
+                var calenderService = new GoogleCalendarService(
+                    serviceAccount: Util.GetEnvironmentVariable("GOOGLE_SERVICE_ACCOUNT"),
+                    certificateThumbprint: Util.GetEnvironmentVariable("GOOGLE_CERTIFICATE_THUMBPRINT"),
+                    calendarId: Util.GetEnvironmentVariable("GOOGLE_CALENDAR_ID"),
+                    timeZone: Util.GetEnvironmentVariable("CALENDAR_TIMEZONE"));
                 var result = await calenderService.GetEventsSample();
                 googleCalendarResult = result?.Count.ToString() ?? "empty resultset";
                 log.LogInformation(googleCalendarResult);
@@ -32,11 +37,23 @@ namespace FamilyBoardInteractive
             catch (Exception ex)
             {
                 googleCalendarResult = ex.Message;
-                log.LogError(ex, "GoogleCalendarService");
+                log.LogError(ex, nameof(GoogleCalendarService));
             }
 
-
-
+            // check Outlook calender
+            try
+            {
+                var calenderService = new OutlookCalendarService(msaToken,
+                   timeZone: Util.GetEnvironmentVariable("CALENDAR_TIMEZONE"));
+                var result = await calenderService.GetEventsSample();
+                outlookCalendarResult = result?.Count.ToString() ?? "empty resultset";
+                log.LogInformation(googleCalendarResult);
+            }
+            catch (Exception ex)
+            {
+                outlookCalendarResult = ex.Message;
+                log.LogError(ex, nameof(OutlookCalendarService));
+            }
             // assemble service info
             var serviceInfo = new
             {

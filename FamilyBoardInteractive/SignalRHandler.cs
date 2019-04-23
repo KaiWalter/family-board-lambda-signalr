@@ -135,11 +135,16 @@ namespace FamilyBoardInteractive
                 var deduplicatedHolidays = holidays.GroupBy(x => x.Date).Select(y => y.First()).ToList<CalendarEntry>();
                 events.AddRange(deduplicatedHolidays);
 
-                var googleCalendarService = new GoogleCalendarService();
+                var googleCalendarService = new GoogleCalendarService(
+                    serviceAccount: Util.GetEnvironmentVariable("GOOGLE_SERVICE_ACCOUNT"),
+                    certificateThumbprint: Util.GetEnvironmentVariable("GOOGLE_CERTIFICATE_THUMBPRINT"),
+                    calendarId: Util.GetEnvironmentVariable("GOOGLE_CALENDAR_ID"),
+                    timeZone: Util.GetEnvironmentVariable("CALENDAR_TIMEZONE"));
                 var googleEvents = await googleCalendarService.GetEvents(start, end);
                 events.AddRange(googleEvents);
 
-                var outlookCalendarService = new OutlookCalendarService(msaToken, Util.GetEnvironmentVariable("OUTLOOK_TIMEZONE"));
+                var outlookCalendarService = new OutlookCalendarService(msaToken, 
+                   timeZone: Util.GetEnvironmentVariable("CALENDAR_TIMEZONE"));
                 var outlookEvents = await outlookCalendarService.GetEvents(start, end);
                 events.AddRange(outlookEvents);
             }
