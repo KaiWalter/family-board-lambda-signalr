@@ -21,6 +21,7 @@ namespace FamilyBoardInteractive
         {
             string googleCalendarResult;
             string outlookCalendarResult;
+            int statusCode = StatusCodes.Status200OK;
 
             // check Google calendar
             try
@@ -38,6 +39,7 @@ namespace FamilyBoardInteractive
             {
                 googleCalendarResult = ex.Message;
                 log.LogError(ex, nameof(GoogleCalendarService));
+                statusCode = StatusCodes.Status424FailedDependency;
             }
 
             // check Outlook calender
@@ -53,19 +55,28 @@ namespace FamilyBoardInteractive
             {
                 outlookCalendarResult = ex.Message;
                 log.LogError(ex, nameof(OutlookCalendarService));
+                statusCode = StatusCodes.Status424FailedDependency;
             }
-            // assemble service info
-            var serviceInfo = new
-            {
-                home = Environment.GetEnvironmentVariable("HOME", EnvironmentVariableTarget.Process),
-                webSiteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME", EnvironmentVariableTarget.Process),
-                appRoot = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase),
-                staticFilesRoot = Util.GetApplicationRoot(),
-                googleCalendarResult,
-                msaToken
-            };
 
-            return (ActionResult)new OkObjectResult(serviceInfo);
+            // check MSA Token
+            if (msaToken == null)
+            {
+                statusCode = StatusCodes.Status424FailedDependency;
+            }
+
+            // assemble service info
+            return statusCode == StatusCodes.Status200OK
+                 ? (ActionResult)new OkObjectResult(new
+                 {
+                     home = Environment.GetEnvironmentVariable("HOME", EnvironmentVariableTarget.Process),
+                     webSiteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME", EnvironmentVariableTarget.Process),
+                     appRoot = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase),
+                     staticFilesRoot = Util.GetApplicationRoot(),
+                     googleCalendarResult,
+                     outlookCalendarResult,
+                     msaToken
+                 })
+                 : (ActionResult)new StatusCodeResult(statusCode);
         }
     }
 }
