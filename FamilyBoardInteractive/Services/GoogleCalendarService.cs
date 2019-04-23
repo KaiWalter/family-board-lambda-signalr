@@ -19,17 +19,11 @@ namespace FamilyBoardInteractive.Services
         static string APPLICATION_NAME = "Family Board";
 
         string CalendarId;
+        string TimeZone;
 
         CalendarService service;
 
-        public GoogleCalendarService() :
-            this(
-                serviceAccount: Util.GetEnvironmentVariable("GOOGLE_SERVICE_ACCOUNT"), 
-                certificateThumbprint: Util.GetEnvironmentVariable("GOOGLE_CERTIFICATE_THUMBPRINT"),
-                calendarId: Util.GetEnvironmentVariable("GOOGLE_CALENDAR_ID"))
-        { }
-
-        public GoogleCalendarService(string serviceAccount, string certificateThumbprint, string calendarId)
+        public GoogleCalendarService(string serviceAccount, string certificateThumbprint, string calendarId, string timeZone = null)
         {
             var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
             store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
@@ -54,6 +48,7 @@ namespace FamilyBoardInteractive.Services
             });
 
             CalendarId = calendarId;
+            TimeZone = timeZone ?? Constants.DEFAULT_TIMEZONE;
         }
 
         public async Task<List<Models.CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate)
@@ -66,6 +61,7 @@ namespace FamilyBoardInteractive.Services
             request.TimeMax = endDate;
             request.ShowDeleted = false;
             request.SingleEvents = true;
+            request.TimeZone = this.TimeZone;
             request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
 
             // List events.
@@ -91,6 +87,7 @@ namespace FamilyBoardInteractive.Services
             request.ShowDeleted = false;
             request.SingleEvents = true;
             request.MaxResults = 10;
+            request.TimeZone = this.TimeZone;
             request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
 
             // List events.

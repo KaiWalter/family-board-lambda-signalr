@@ -28,7 +28,6 @@ namespace FamilyBoardInteractive.UnitTests
 
             // assert
             Assert.IsNotNull(result);
-            Assert.Greater(result.Count, 0);
         }
 
         [Test]
@@ -50,6 +49,25 @@ namespace FamilyBoardInteractive.UnitTests
             // assert
             Assert.IsNotNull(result);
             Assert.Greater(result.Count, 0);
+        }
+
+        [Test]
+        public async Task TestOutlookCalendarServiceSample()
+        {
+            // arrange
+            var service = new OutlookCalendarService(
+                    msaToken: new MSAToken()
+                    {
+                        TokenType = "bearer",
+                        AccessToken = TestContext.Parameters["OUTLOOK_TEST_TOKEN"]
+                    }
+                );
+
+            // act
+            var result = await service.GetEventsSample();
+
+            // assert
+            Assert.IsNotNull(result);
         }
 
         [Test]
