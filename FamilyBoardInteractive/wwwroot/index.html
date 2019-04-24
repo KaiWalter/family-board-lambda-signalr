@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"
-            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 
     <script src="/static/lib/signalr/signalr.js"></script>
 
@@ -41,6 +41,8 @@
             let monthNames = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
             let weekDayNames = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
+            let persistentMessage = null;
+
             const connection = new signalR.HubConnectionBuilder()
                 .withUrl("/api")
                 .configureLogging(signalR.LogLevel.Information)
@@ -57,9 +59,11 @@
 
             connection.onclose(() => console.log('disconnected'));
 
+            // --------------------------------------------------------------------------------
+            // receive a message from back-end
             function newMessage(message) {
-                console.log(message);
                 putMessage(message.Text);
+                persistentMessage = message;
             }
 
             // --------------------------------------------------------------------------------
@@ -68,7 +72,11 @@
                 $("#message").html(message);
                 if (timeoutSecs) {
                     setTimeout(() => {
-                        $("#message").empty();
+                        if (persistentMessage) {
+                            $("#message").html(persistentMessage);
+                        } else {
+                            $("#message").empty();
+                        }
                     }, timeoutSecs * 1000);
                 }
             }
