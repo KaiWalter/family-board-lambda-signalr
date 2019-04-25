@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"
-        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 
     <script src="/static/lib/signalr/signalr.js"></script>
 
@@ -23,8 +23,10 @@
         </div>
 
         <div class="main">
-            <div class="calendar" />
-            <div id="message" />
+            <div class="calendar">
+            </div>
+            <div class="message">
+            </div>
         </div>
 
     </div>
@@ -63,19 +65,19 @@
             // receive a message from back-end
             function newMessage(message) {
                 putMessage(message.Text);
-                persistentMessage = message;
+                persistentMessage = message.Text;
             }
 
             // --------------------------------------------------------------------------------
             // put a message
             function putMessage(message, timeoutSecs) {
-                $("#message").html(message);
+                $(".message").html(message);
                 if (timeoutSecs) {
                     setTimeout(() => {
                         if (persistentMessage) {
-                            $("#message").html(persistentMessage);
+                            $(".message").html("<marquee>"+persistentMessage+"</marquee>");
                         } else {
-                            $("#message").empty();
+                            $(".message").empty();
                         }
                     }, timeoutSecs * 1000);
                 }

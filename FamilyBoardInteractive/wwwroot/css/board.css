@@ -10,14 +10,12 @@ body {
 .board {
     display: grid;
     grid-template-columns: 100fr 161fr;
-    grid-template-rows: auto;
     height: 100vh;
 }
 
 .main {
     display: grid;
     margin-left: 10px;
-    grid-template-columns: auto;
     grid-template-rows: auto 30px;
 }
 
