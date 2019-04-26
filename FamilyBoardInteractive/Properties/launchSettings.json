@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "FamilyBoardInteractive": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "FB_BUILD": "LOCAL"
+      }
+    }
+  }
+}
