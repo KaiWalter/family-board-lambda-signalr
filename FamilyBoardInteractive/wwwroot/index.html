@@ -23,8 +23,10 @@
         </div>
 
         <div class="main">
-            <div class="calendar" />
-            <div id="message" />
+            <div class="calendar">
+            </div>
+            <div class="message">
+            </div>
         </div>
 
     </div>
@@ -40,6 +42,8 @@
 
             let monthNames = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
             let weekDayNames = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+
+            let persistentMessage = null;
 
             const connection = new signalR.HubConnectionBuilder()
                 .withUrl("/api")
@@ -57,18 +61,24 @@
 
             connection.onclose(() => console.log('disconnected'));
 
+            // --------------------------------------------------------------------------------
+            // receive a message from back-end
             function newMessage(message) {
-                console.log(message);
                 putMessage(message.Text);
+                persistentMessage = message.Text;
             }
 
             // --------------------------------------------------------------------------------
             // put a message
             function putMessage(message, timeoutSecs) {
-                $("#message").html(message);
+                $(".message").html(message);
                 if (timeoutSecs) {
                     setTimeout(() => {
-                        $("#message").empty();
+                        if (persistentMessage) {
+                            $(".message").html("<marquee>"+persistentMessage+"</marquee>");
+                        } else {
+                            $(".message").empty();
+                        }
                     }, timeoutSecs * 1000);
                 }
             }
