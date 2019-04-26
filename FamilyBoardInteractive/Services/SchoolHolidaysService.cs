@@ -19,7 +19,7 @@ namespace FamilyBoardInteractive.Services
 
         }
 
-        public async Task<List<CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate)
+        public async Task<List<CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate, bool isPrimary = false, bool isSecondary = false)
         {
             var result = new List<CalendarEntry>();
 

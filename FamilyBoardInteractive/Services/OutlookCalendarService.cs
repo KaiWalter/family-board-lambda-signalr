@@ -22,9 +22,9 @@ namespace FamilyBoardInteractive.Services
             TimeZone = timeZone ?? Constants.DEFAULT_TIMEZONE;
         }
 
-        public async Task<List<CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate)
+        public async Task<List<CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate, bool isPrimary = false, bool isSecondary = false)
         {
-            return await GetCalendar(startDate, endDate);
+            return await GetCalendar(startDate, endDate, isPrimary, isSecondary);
         }
 
         public async Task<List<CalendarEntry>> GetEventsSample()
@@ -32,7 +32,7 @@ namespace FamilyBoardInteractive.Services
             return await GetCalendar(startDate: DateTime.UtcNow.Date, endDate: DateTime.UtcNow.Date.AddDays(7));
         }
 
-        private async Task<List<CalendarEntry>> GetCalendar(DateTime startDate, DateTime endDate)
+        private async Task<List<CalendarEntry>> GetCalendar(DateTime startDate, DateTime endDate, bool isPrimary = false, bool isSecondary = false)
         {
             List<CalendarEntry> eventResults = new List<CalendarEntry>();
 
@@ -67,7 +67,9 @@ namespace FamilyBoardInteractive.Services
                                 {
                                     Date = currentDT.ToString("u").Substring(0, 10),
                                     Description = subject,
-                                    AllDayEvent = isAllDay
+                                    AllDayEvent = isAllDay,
+                                    IsPrimary = isPrimary,
+                                    IsSecondary = isSecondary
                                 };
                                 eventResults.Add(eventResult);
                                 currentDT = currentDT.AddDays(1);
@@ -79,7 +81,9 @@ namespace FamilyBoardInteractive.Services
                             {
                                 Date = startTime.ToString("u").Substring(0, 10),
                                 Time = startTime.Hour.ToString().PadLeft(2, '0') + ":" + startTime.Minute.ToString().PadLeft(2, '0'),
-                                Description = subject
+                                Description = subject,
+                                IsPrimary = isPrimary,
+                                IsSecondary = isSecondary
                             };
                             eventResults.Add(eventResult);
                         }

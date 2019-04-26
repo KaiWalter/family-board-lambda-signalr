@@ -140,12 +140,12 @@ namespace FamilyBoardInteractive
                     certificateThumbprint: Util.GetEnvironmentVariable("GOOGLE_CERTIFICATE_THUMBPRINT"),
                     calendarId: Util.GetEnvironmentVariable("GOOGLE_CALENDAR_ID"),
                     timeZone: Util.GetEnvironmentVariable("CALENDAR_TIMEZONE"));
-                var googleEvents = await googleCalendarService.GetEvents(start, end);
+                var googleEvents = await googleCalendarService.GetEvents(start, end, isPrimary: true);
                 events.AddRange(googleEvents);
 
                 var outlookCalendarService = new OutlookCalendarService(msaToken, 
                    timeZone: Util.GetEnvironmentVariable("CALENDAR_TIMEZONE"));
-                var outlookEvents = await outlookCalendarService.GetEvents(start, end);
+                var outlookEvents = await outlookCalendarService.GetEvents(start, end, isSecondary: true);
                 events.AddRange(outlookEvents);
             }
             catch (Exception ex)

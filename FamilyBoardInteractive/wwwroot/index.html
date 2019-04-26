@@ -187,7 +187,8 @@
                                 } else if (entry.schoolHoliday) {
                                     content += "<div class='school_holiday_day'>" + entry.description + "</div>";
                                 } else {
-                                    content += "<div class='all_day'>" + entry.description + "</div>";
+                                    let addClass = (entry.isPrimary ? " primary_calendar" : "") + (entry.isSecondary ? " secondary_calendar" : "");
+                                    content += "<div class='all_day" + addClass + "'>" + entry.description + "</div>";
                                 }
                             }
                         });
@@ -195,7 +196,8 @@
                         // render timed events below
                         events.forEach((entry) => {
                             if (iDateFormatted === entry.date && !entry.allDayEvent) {
-                                content += "<p class='single_event'>" + entry.time + " " + entry.description + "</p>";
+                                    let addClass = (entry.isPrimary ? " primary_calendar" : "") + (entry.isSecondary ? " secondary_calendar" : "");
+                                content += "<p class='single_event" + addClass + "'>" + entry.time + " " + entry.description + "</p>";
                             }
                         });
 

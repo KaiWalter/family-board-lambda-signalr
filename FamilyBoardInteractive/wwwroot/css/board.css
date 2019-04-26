@@ -103,6 +103,13 @@ body {
     line-height: 1em;
 }
 
+.primary_calendar {
+}
+
+.secondary_calendar {
+    border-left: 2px solid blue;
+}
+
 .all_day {
     background-color: lightgray;
     color: black;
@@ -121,8 +128,6 @@ body {
     font-size: medium;
     text-align: center;
     line-height: 2em;
-    padding-left: 2px;
-    padding-right: 2px;
     margin-bottom: 2px;
     border-radius: 3px;
 }
