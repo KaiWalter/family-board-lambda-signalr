@@ -30,8 +30,8 @@ namespace FamilyBoardInteractive
 
         [FunctionName(nameof(SendMessage))]
         public static Task SendMessage(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post")]object message,
-            [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post")] Message message,
+            [SignalR(HubName = HUBNAME)] IAsyncCollector<SignalRMessage> signalRMessages)
         {
             return signalRMessages.AddAsync(
                 new SignalRMessage
