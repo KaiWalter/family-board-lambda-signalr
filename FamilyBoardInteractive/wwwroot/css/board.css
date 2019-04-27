@@ -122,10 +122,11 @@ body {
 }
 
 .public_holiday_day {
-    background-color: skyblue;
-    color: black;
+    opacity: 1;
+    color: lightcyan;
     border: 1px solid white;
     font-size: medium;
+    font-weight: bold;
     text-align: center;
     line-height: 2em;
     margin-bottom: 2px;
@@ -133,10 +134,10 @@ body {
 }
 
 .school_holiday_day {
-    background-color: lightskyblue;
-    color: black;
+    opacity: 1;
+    color: lightcyan;
     border: 1px solid white;
-    font-size: small;
+    font-size: medium;
     text-align: center;
     line-height: 2em;
     padding-left: 2px;
