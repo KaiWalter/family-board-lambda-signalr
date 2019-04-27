@@ -31,7 +31,7 @@ namespace FamilyBoardInteractive.Services
 
             if(certificateCollection.Count < 1)
             {
-                throw new ApplicationException($"Google Service Account certificate with tumbprint {certificateThumbprint} not found.");
+                throw new ApplicationException($"Google Service Account certificate with thumbprint {certificateThumbprint} not found.");
             }
 
             var certificate = certificateCollection[0];
