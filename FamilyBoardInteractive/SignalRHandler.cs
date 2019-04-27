@@ -47,7 +47,7 @@ namespace FamilyBoardInteractive
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = GetCalendars(msaToken).GetAwaiter().GetResult();
+            var events = CalendarServer.GetCalendars(msaToken).GetAwaiter().GetResult();
 
             return signalRMessages.AddAsync(
                 new SignalRMessage
@@ -74,7 +74,7 @@ namespace FamilyBoardInteractive
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = GetCalendars(msaToken).GetAwaiter().GetResult();
+            var events = CalendarServer.GetCalendars(msaToken).GetAwaiter().GetResult();
 
             return signalRMessages.AddAsync(
                 new SignalRMessage
@@ -113,47 +113,6 @@ namespace FamilyBoardInteractive
             [Queue(Constants.QUEUEMESSAGEPUSHIMAGE)]out string pushImageMessage)
         {
             pushImageMessage = $"scheduled {DateTime.UtcNow.ToString("u")}";
-        }
-
-        private static async Task<System.Collections.Generic.List<Models.CalendarEntry>> GetCalendars(MSAToken msaToken)
-        {
-            var start = DateTime.Now.Date.AddDays(-7);
-            var end = DateTime.Now.Date.AddDays(Constants.CalendarWeeks * 7);
-
-            var events = new System.Collections.Generic.List<CalendarEntry>();
-
-            try
-            {
-                var holidays = new System.Collections.Generic.List<CalendarEntry>();
-
-                // combine public and school holidays
-                var publicHolidaysService = new PublicHolidaysService();
-                var schoolHolidaysService = new SchoolHolidaysService();
-
-                holidays.AddRange(await publicHolidaysService.GetEvents(start, end));
-                //holidays.AddRange(await schoolHolidaysService.GetEvents(start, end));
-                var deduplicatedHolidays = holidays.GroupBy(x => x.Date).Select(y => y.First()).ToList<CalendarEntry>();
-                events.AddRange(deduplicatedHolidays);
-
-                var googleCalendarService = new GoogleCalendarService(
-                    serviceAccount: Util.GetEnvironmentVariable("GOOGLE_SERVICE_ACCOUNT"),
-                    certificateThumbprint: Util.GetEnvironmentVariable("GOOGLE_CERTIFICATE_THUMBPRINT"),
-                    calendarId: Util.GetEnvironmentVariable("GOOGLE_CALENDAR_ID"),
-                    timeZone: Util.GetEnvironmentVariable("CALENDAR_TIMEZONE"));
-                var googleEvents = await googleCalendarService.GetEvents(start, end, isPrimary: true);
-                events.AddRange(googleEvents);
-
-                var outlookCalendarService = new OutlookCalendarService(msaToken, 
-                   timeZone: Util.GetEnvironmentVariable("CALENDAR_TIMEZONE"));
-                var outlookEvents = await outlookCalendarService.GetEvents(start, end, isSecondary: true);
-                events.AddRange(outlookEvents);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-
-            return events;
         }
     }
 }
