@@ -23,6 +23,23 @@ namespace FamilyBoardInteractive
             return appRoot;
         }
 
+        public static string GetImagePath()
+        {
+            string imagePath = Path.Combine(Path.GetTempPath(), "FamilyBoard/images");
+
+            if (!string.IsNullOrEmpty(GetEnvironmentVariable("WEBSITE_SITE_NAME")) &&
+                !string.IsNullOrEmpty(GetEnvironmentVariable("HOME")))
+            {
+                imagePath = Path.Combine(GetEnvironmentVariable("HOME"), @"data/images");
+            }
+
+            if (!Directory.Exists(imagePath))
+            {
+                Directory.CreateDirectory(imagePath);
+            }
+
+            return imagePath;
+        }
 
         private static string GetScriptPath()
             => Path.Combine(GetEnvironmentVariable("HOME"), @"site\wwwroot");
