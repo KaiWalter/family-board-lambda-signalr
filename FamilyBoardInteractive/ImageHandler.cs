@@ -15,7 +15,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -23,13 +22,9 @@ namespace FamilyBoardInteractive
 {
     public static class ImageHandler
     {
-        private const string ONEDRIVEPATH = "https://graph.microsoft.com/v1.0/me/drive/root:/{0}:/children";
-        private const string SINGLETONLOCK = "Images";
-
-        private static byte[] ImageData;
+        const string ONEDRIVEPATH = "https://graph.microsoft.com/v1.0/me/drive/root:/{0}:/children";
 
         [FunctionName(nameof(PushNextImage))]
-        [Singleton(SINGLETONLOCK, scope: SingletonScope.Host)]
         public static async Task<IActionResult> PushNextImage(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
@@ -49,7 +44,7 @@ namespace FamilyBoardInteractive
         }
 
         [FunctionName(nameof(QueuedPushNextImage))]
-        [Singleton(SINGLETONLOCK, scope:SingletonScope.Host)]
+        [Singleton(Mode = SingletonMode.Listener)]
         public static async Task QueuedPushNextImage(
             [QueueTrigger(Constants.QUEUEMESSAGEPUSHIMAGE)]string queueMessage,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
@@ -67,7 +62,6 @@ namespace FamilyBoardInteractive
         }
 
         [FunctionName("ImageServer")]
-        [Singleton(SINGLETONLOCK, scope: SingletonScope.Host)]
         public static HttpResponseMessage ImageServer(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)]HttpRequest req,
             ILogger logger)
@@ -85,11 +79,9 @@ namespace FamilyBoardInteractive
 
             try
             {
-                //string tempFile = Path.Combine(Util.GetImagePath(), "image.png");
+                string tempFile = Path.Combine(Util.GetImagePath(), "image.png");
 
-                HttpResponseMessage response = new HttpResponseMessage();
-                response.Content = new ByteArrayContent(ImageData);
-                response.Content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+                HttpResponseMessage response = StaticFileServer.ServeFile(tempFile, logger);
                 return response;
             }
             catch
@@ -102,12 +94,12 @@ namespace FamilyBoardInteractive
         {
             var imageStream = await GetNextBlobImage(msaToken);
 
-            //string tempFile = Path.Combine(Util.GetImagePath(), "image.png");
+            string tempFile = Path.Combine(Util.GetImagePath(), "image.png");
 
-            //using (FileStream fileOutputStream = new FileStream(tempFile, FileMode.Create))
-            //{
-            //    imageStream.CopyTo(fileOutputStream);
-            //}
+            using (FileStream fileOutputStream = new FileStream(tempFile, FileMode.Create))
+            {
+                imageStream.CopyTo(fileOutputStream);
+            }
 
             string key = Services.Encrypt.EncryptString(DateTime.UtcNow.AddMinutes(1).ToString("u"), 
                 initVector: Util.GetEnvironmentVariable("ENCRYPTION_INITVECTOR"),
@@ -143,8 +135,8 @@ namespace FamilyBoardInteractive
                     using (var webClient = new WebClient())
                     {
                         byte[] imageBytes = webClient.DownloadData(imagePath);
-                        ImageData = TransformImage(imageBytes);
-                        //imageResult = new MemoryStream(imageBytes);
+                        imageBytes = TransformImage(imageBytes);
+                        imageResult = new MemoryStream(imageBytes);
                     }
                 }
             }
