@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json.Linq;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
@@ -13,9 +12,11 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace FamilyBoardInteractive
 {
@@ -23,51 +24,12 @@ namespace FamilyBoardInteractive
     {
         const string ONEDRIVEPATH = "https://graph.microsoft.com/v1.0/me/drive/root:/{0}:/children";
 
-        [FunctionName(nameof(QueueSasUrlForImageBlob))]
-        [Singleton(Mode = SingletonMode.Listener)]
-        public static async Task QueueSasUrlForImageBlob(
-            [BlobTrigger(Constants.BLOBPATHBOARDIMAGE)] CloudBlockBlob imageBlob,
-            [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
-            ILogger log)
-        {
-            SharedAccessBlobPolicy sasConstraints = new SharedAccessBlobPolicy();
-            sasConstraints.SharedAccessExpiryTime = DateTimeOffset.UtcNow.AddMinutes(1); ;
-            sasConstraints.Permissions = SharedAccessBlobPermissions.Read;
-            string sasContainerToken = imageBlob.GetSharedAccessSignature(sasConstraints);
-
-            var imageObject = new JObject()
-            {
-                { "path", imageBlob.Uri + sasContainerToken }
-            };
-
-            await updateImageMessage.AddAsync(imageObject.ToString());
-        }
-
-        [FunctionName(nameof(QueuedPushNextImage))]
-        [Singleton(Mode = SingletonMode.Listener)]
-        public static async Task QueuedPushNextImage(
-            [QueueTrigger(Constants.QUEUEMESSAGEPUSHIMAGE)]string queueMessage,
-            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
-            [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
-            [Blob(Constants.BLOBPATHBOARDIMAGE, access: FileAccess.Write)] CloudBlockBlob outputBlob,
-            ILogger log)
-        {
-            if (DateTime.UtcNow > msaToken.Expires) // token invalid
-            {
-                await refreshTokenMessage.AddAsync($"initiated by {nameof(QueuedPushNextImage)}");
-                return;
-            }
-
-            outputBlob.Properties.ContentType = "image/jpeg";
-            await outputBlob.UploadFromStreamAsync(await GetNextBlobImage(msaToken));
-        }
-
         [FunctionName(nameof(PushNextImage))]
         public static async Task<IActionResult> PushNextImage(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
             [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
-            [Blob(Constants.BLOBPATHBOARDIMAGE, access: FileAccess.Write)] CloudBlockBlob outputBlob,
+            [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
             ILogger log)
         {
             if (DateTime.UtcNow > msaToken.Expires) // token invalid
@@ -76,10 +38,85 @@ namespace FamilyBoardInteractive
                 return new StatusCodeResult(503);
             }
 
-            outputBlob.Properties.ContentType = "image/jpeg";
-            await outputBlob.UploadFromStreamAsync(await GetNextBlobImage(msaToken));
+            await ProcessNextImage(msaToken, updateImageMessage);
 
             return new OkResult();
+        }
+
+        [FunctionName(nameof(QueuedPushNextImage))]
+        [Singleton(Mode = SingletonMode.Listener)]
+        public static async Task QueuedPushNextImage(
+            [QueueTrigger(Constants.QUEUEMESSAGEPUSHIMAGE)]string queueMessage,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
+            [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
+            [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
+            ILogger log)
+        {
+            if (DateTime.UtcNow > msaToken.Expires) // token invalid
+            {
+                await refreshTokenMessage.AddAsync($"initiated by {nameof(QueuedPushNextImage)}");
+                return;
+            }
+
+            await ProcessNextImage(msaToken, updateImageMessage);
+        }
+
+        [FunctionName("ImageServer")]
+        public static HttpResponseMessage ImageServer(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)]HttpRequest req,
+            ILogger logger)
+        {
+            // check key
+            var keyEncrypted = req.Query.FirstOrDefault(q => string.Compare(q.Key, "key", true) == 0).Value[0];
+            var keyDecrypted = Services.Encrypt.DecryptString(keyEncrypted, 
+                initVector: Util.GetEnvironmentVariable("ENCRYPTION_INITVECTOR"),
+                passPhrase: Util.GetEnvironmentVariable("IMAGE_PASSPHRASE"));
+            var expiration = DateTime.Parse(keyDecrypted);
+            if (DateTime.UtcNow > expiration)
+            {
+                return new HttpResponseMessage(HttpStatusCode.Unauthorized);
+            }
+
+            try
+            {
+                string tempDir = Path.Combine(Path.GetTempPath(), "FamilyBoard");
+                string tempFile = Path.Combine(tempDir, "image.png");
+
+                HttpResponseMessage response = StaticFileServer.ServeFile(tempFile, logger);
+                return response;
+            }
+            catch
+            {
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            }
+        }
+
+        private static async Task ProcessNextImage(MSAToken msaToken, IAsyncCollector<string> updateImageMessage)
+        {
+            var imageStream = await GetNextBlobImage(msaToken);
+
+            string tempDir = Path.Combine(Path.GetTempPath(), "FamilyBoard");
+            if (!Directory.Exists(tempDir))
+            {
+                Directory.CreateDirectory(tempDir);
+            }
+            string tempFile = Path.Combine(tempDir, "image.png");
+
+            using (FileStream fileOutputStream = new FileStream(tempFile, FileMode.Create))
+            {
+                imageStream.CopyTo(fileOutputStream);
+            }
+
+            string key = Services.Encrypt.EncryptString(DateTime.UtcNow.AddMinutes(1).ToString("u"), 
+                initVector: Util.GetEnvironmentVariable("ENCRYPTION_INITVECTOR"),
+                passPhrase: Util.GetEnvironmentVariable("IMAGE_PASSPHRASE"));
+
+            var imageObject = new JObject()
+            {
+                { "path", $"/api/ImageServer?key={HttpUtility.UrlEncode(key)}" }
+            };
+
+            await updateImageMessage.AddAsync(imageObject.ToString());
         }
 
         private static async Task<Stream> GetNextBlobImage(MSAToken msaToken)

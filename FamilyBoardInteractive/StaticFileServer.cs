@@ -59,7 +59,7 @@ namespace FamilyBoardInteractive
             }
         }
 
-        private static HttpResponseMessage ServeFile(string filePath, ILogger logger)
+        internal static HttpResponseMessage ServeFile(string filePath, ILogger logger)
         {
             var response = new HttpResponseMessage(HttpStatusCode.OK);
             var stream = new FileStream(filePath, FileMode.Open);

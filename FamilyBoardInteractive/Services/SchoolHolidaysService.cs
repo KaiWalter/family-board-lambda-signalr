@@ -97,7 +97,7 @@ namespace FamilyBoardInteractive.Services
                 }
             }
 
-            return yearResult.GroupBy(x => x.Date).Select(y => y.First()).ToList<CalendarEntry>(); ;
+            return yearResult.GroupBy(x => x.Date).Select(y => y.First()).ToList<CalendarEntry>();
         }
     }
 }
