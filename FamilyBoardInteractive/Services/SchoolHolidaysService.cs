@@ -19,7 +19,7 @@ namespace FamilyBoardInteractive.Services
 
         }
 
-        public async Task<List<CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate)
+        public async Task<List<CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate, bool isPrimary = false, bool isSecondary = false)
         {
             var result = new List<CalendarEntry>();
 
@@ -67,8 +67,10 @@ namespace FamilyBoardInteractive.Services
                                     var endsOn = holiday["ends_on"].Value<DateTime>();
                                     var name = holiday["name"].Value<string>();
 
+                                    var duration = endsOn - startsOn;
+
                                     if (startsOn.CompareTo(endDate) <= 0 && endsOn.CompareTo(startDate) >= 0 &&
-                                        !name.StartsWith("Pessach"))
+                                        duration.CompareTo(new TimeSpan(0)) > 0)
                                     {
                                         var date = startsOn;
                                         while(date <= endsOn)

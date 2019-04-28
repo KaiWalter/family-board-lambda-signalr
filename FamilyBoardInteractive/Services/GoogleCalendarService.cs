@@ -31,7 +31,7 @@ namespace FamilyBoardInteractive.Services
 
             if(certificateCollection.Count < 1)
             {
-                throw new ApplicationException($"Google Service Account certificate with tumbprint {certificateThumbprint} not found.");
+                throw new ApplicationException($"Google Service Account certificate with thumbprint {certificateThumbprint} not found.");
             }
 
             var certificate = certificateCollection[0];
@@ -51,7 +51,7 @@ namespace FamilyBoardInteractive.Services
             TimeZone = timeZone ?? Constants.DEFAULT_TIMEZONE;
         }
 
-        public async Task<List<Models.CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate)
+        public async Task<List<Models.CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate, bool isPrimary = false, bool isSecondary = false)
         {
             List<Models.CalendarEntry> eventResults = new List<Models.CalendarEntry>();
 
@@ -70,7 +70,7 @@ namespace FamilyBoardInteractive.Services
             {
                 foreach (var eventItem in events.Items)
                 {
-                    eventResults.AddRange(CreateCalendarEntries(eventItem));
+                    eventResults.AddRange(CreateCalendarEntries(eventItem, isPrimary, isSecondary));
                 }
             }
 
@@ -103,7 +103,7 @@ namespace FamilyBoardInteractive.Services
             return eventResults;
         }
 
-        private static List<Models.CalendarEntry> CreateCalendarEntries(Event eventItem)
+        private static List<Models.CalendarEntry> CreateCalendarEntries(Event eventItem, bool isPrimary = false, bool isSecondary = false)
         {
             var results = new List<Models.CalendarEntry>();
 
@@ -118,7 +118,9 @@ namespace FamilyBoardInteractive.Services
                     {
                         Date = currentDT.ToString("u").Substring(0,10),
                         Description = eventItem.Summary,
-                        AllDayEvent = true
+                        AllDayEvent = true,
+                        IsPrimary = isPrimary,
+                        IsSecondary = isSecondary
                     };
                     results.Add(eventResult);
                     currentDT = currentDT.AddDays(1);
@@ -131,7 +133,9 @@ namespace FamilyBoardInteractive.Services
                 {
                     Date = eventItem.Start.DateTimeRaw.Substring(0,10),
                     Time = eventItem.Start.DateTimeRaw.Substring(11, 5),
-                    Description = eventItem.Summary
+                    Description = eventItem.Summary,
+                    IsPrimary = isPrimary,
+                    IsSecondary = isSecondary
                 };
                 results.Add(eventResult);
             }

@@ -19,5 +19,9 @@ namespace FamilyBoardInteractive.Models
         public bool PublicHoliday { get; set; }
         [JsonProperty("schoolHoliday")]
         public bool SchoolHoliday { get; set; }
+        [JsonProperty("isPrimary")]
+        public bool IsPrimary { get; set; }
+        [JsonProperty("isSecondary")]
+        public bool IsSecondary { get; set; }
     }
 }

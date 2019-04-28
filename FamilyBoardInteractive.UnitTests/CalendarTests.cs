@@ -122,7 +122,7 @@ namespace FamilyBoardInteractive.UnitTests
 
             // assert
             Assert.IsNotNull(result);
-            Assert.AreEqual(result.Count, 14);
+            Assert.AreEqual(13, result.Count);
         }
     }
 }

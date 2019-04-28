@@ -103,6 +103,13 @@ body {
     line-height: 1em;
 }
 
+.primary_calendar {
+}
+
+.secondary_calendar {
+    border-left: 2px solid blue;
+}
+
 .all_day {
     background-color: lightgray;
     color: black;
@@ -115,23 +122,22 @@ body {
 }
 
 .public_holiday_day {
-    background-color: darkgray;
-    color: black;
+    opacity: 1;
+    color: lightcyan;
     border: 1px solid white;
     font-size: medium;
+    font-weight: bold;
     text-align: center;
     line-height: 2em;
-    padding-left: 2px;
-    padding-right: 2px;
     margin-bottom: 2px;
     border-radius: 3px;
 }
 
 .school_holiday_day {
-    background-color: darkgray;
-    color: black;
+    opacity: 1;
+    color: lightcyan;
     border: 1px solid white;
-    font-size: small;
+    font-size: medium;
     text-align: center;
     line-height: 2em;
     padding-left: 2px;
