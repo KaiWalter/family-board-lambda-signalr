@@ -79,7 +79,7 @@ namespace FamilyBoardInteractive
 
             try
             {
-                string tempDir = Path.Combine(Path.GetTempPath(), "FamilyBoard");
+                string tempDir = Path.Combine(Path.Combine(Util.GetApplicationRoot(), "wwwroot/images"));
                 string tempFile = Path.Combine(tempDir, "image.png");
 
                 HttpResponseMessage response = StaticFileServer.ServeFile(tempFile, logger);
@@ -95,7 +95,7 @@ namespace FamilyBoardInteractive
         {
             var imageStream = await GetNextBlobImage(msaToken);
 
-            string tempDir = Path.Combine(Path.GetTempPath(), "FamilyBoard");
+            string tempDir = Path.Combine(Path.Combine(Util.GetApplicationRoot(), "wwwroot/images"));
             if (!Directory.Exists(tempDir))
             {
                 Directory.CreateDirectory(tempDir);

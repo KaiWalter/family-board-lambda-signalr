@@ -4,6 +4,7 @@
 # local solution files with sensitive information
 local.settings.json
 unittests.runsettings
+images
 
 # User-specific files
 *.suo
