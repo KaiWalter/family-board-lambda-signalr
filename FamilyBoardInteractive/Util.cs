@@ -11,8 +11,7 @@ namespace FamilyBoardInteractive
         public static string GetApplicationRoot()
         {
             // check for Azure App Service hosting
-            if (!string.IsNullOrEmpty(GetEnvironmentVariable("WEBSITE_SITE_NAME")) &&
-                !string.IsNullOrEmpty(GetEnvironmentVariable("HOME")))
+            if (IsAppService())
             {
                 return GetScriptPath();
             }
@@ -23,12 +22,15 @@ namespace FamilyBoardInteractive
             return appRoot;
         }
 
+        private static bool IsAppService()
+            => !string.IsNullOrEmpty(GetEnvironmentVariable("WEBSITE_SITE_NAME")) &&
+               !string.IsNullOrEmpty(GetEnvironmentVariable("HOME"));
+
         public static string GetImagePath()
         {
             string imagePath = Path.Combine(Path.GetTempPath(), "FamilyBoard/images");
 
-            if (!string.IsNullOrEmpty(GetEnvironmentVariable("WEBSITE_SITE_NAME")) &&
-                !string.IsNullOrEmpty(GetEnvironmentVariable("HOME")))
+            if (IsAppService())
             {
                 imagePath = Path.Combine(GetEnvironmentVariable("HOME"), @"data/images");
             }
