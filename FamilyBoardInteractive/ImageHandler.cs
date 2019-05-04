@@ -15,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -23,6 +24,7 @@ namespace FamilyBoardInteractive
     public static class ImageHandler
     {
         const string ONEDRIVEPATH = "https://graph.microsoft.com/v1.0/me/drive/root:/{0}:/children";
+        private static readonly RNGCryptoServiceProvider Randomizer = new RNGCryptoServiceProvider();
 
         [FunctionName(nameof(PushNextImage))]
         public static async Task<IActionResult> PushNextImage(
@@ -151,7 +153,8 @@ namespace FamilyBoardInteractive
 
             while (imageMimeType.CompareTo("image/jpeg") != 0)
             {
-                var randomImageIndex = new Random().Next(imageList.Count);
+                //var randomImageIndex = new Random().Next(imageList.Count);
+                var randomImageIndex = Between(0, imageList.Count-1);
                 imageObject = (JObject)(imageList[randomImageIndex]);
                 var imageFile = (JObject)imageObject["file"];
                 imageMimeType = imageFile["mimeType"].Value<string>();
@@ -229,6 +232,33 @@ namespace FamilyBoardInteractive
                     flipMode = FlipMode.None;
                     break;
             }
+        }
+
+        /// <summary>
+        /// https://scottlilly.com/create-better-random-numbers-in-c/
+        /// </summary>
+        /// <param name="minimumValue"></param>
+        /// <param name="maximumValue"></param>
+        /// <returns></returns>
+        private static int Between(int minimumValue, int maximumValue)
+        {
+            byte[] randomNumber = new byte[1];
+
+            Randomizer.GetBytes(randomNumber);
+
+            double asciiValueOfRandomCharacter = Convert.ToDouble(randomNumber[0]);
+
+            // We are using Math.Max, and substracting 0.00000000001, 
+            // to ensure "multiplier" will always be between 0.0 and .99999999999
+            // Otherwise, it's possible for it to be "1", which causes problems in our rounding.
+            double multiplier = Math.Max(0, (asciiValueOfRandomCharacter / 255d) - 0.00000000001d);
+
+            // We need to add one to the range, to allow for the rounding done with Math.Floor
+            int range = maximumValue - minimumValue + 1;
+
+            double randomValueInRange = Math.Floor(multiplier * range);
+
+            return (int)(minimumValue + randomValueInRange);
         }
     }
 }
