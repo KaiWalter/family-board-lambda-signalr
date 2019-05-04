@@ -127,7 +127,7 @@ namespace FamilyBoardInteractive.Services
                 }
             }
             // for event on one day create one entry
-            else if(eventItem.Start.DateTimeRaw != null && !string.IsNullOrEmpty(eventItem.Start.TimeZone))
+            else if(eventItem.Start.DateTimeRaw != null)
             {
                 var eventResult = new Models.CalendarEntry()
                 {
