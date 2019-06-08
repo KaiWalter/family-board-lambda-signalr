@@ -80,7 +80,7 @@ namespace FamilyBoardInteractive.Services
                                                 AllDayEvent = true,
                                                 SchoolHoliday = true,
                                                 Date = date.ToString("u").Substring(0, 10),
-                                                Description = holiday["name"].Value<string>()
+                                                Description = holiday["name"].Value<string>().Replace("Himmelfahrt","Pfingsten")
                                             });
                                             date = date.AddDays(1);
                                         }
