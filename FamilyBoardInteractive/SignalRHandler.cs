@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.SignalRService;
+using Microsoft.WindowsAzure.Storage.Blob;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -62,9 +64,12 @@ namespace FamilyBoardInteractive
         public static void QueuedBoardUpdate(
             [QueueTrigger(QUEUEMESSAGEBOARDUPDATE)]string queueMessage,
             [Queue(Constants.QUEUEMESSAGEUPDATECALENDER)]out string updateCalendarMessage,
-            [Queue(Constants.QUEUEMESSAGEPUSHIMAGE)]out string pushImageMessage)
+            [Queue(Constants.QUEUEMESSAGEPUSHIMAGE)]out string pushImageMessage,
+            [Queue(Constants.QUEUEMESSAGECONFIGURUATION)]out string configuration
+            )
         {
-            updateCalendarMessage = pushImageMessage = queueMessage;
+            updateCalendarMessage = configuration = pushImageMessage = queueMessage;
+
         }
 
         [FunctionName(nameof(QueuedCalendarUpdate))]
