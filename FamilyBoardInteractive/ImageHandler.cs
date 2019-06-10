@@ -38,7 +38,7 @@ namespace FamilyBoardInteractive
                     [Blob(Constants.BLOBPATHIMAGESPLAYED, FileAccess.ReadWrite)] CloudBlockBlob imagesPlayedStorageBlob,
             ILogger log)
         {
-            if (DateTime.UtcNow > msaToken.Expires) // token invalid
+            if (msaToken.NeedsRefresh) // token invalid
             {
                 await refreshTokenMessage.AddAsync($"initiated by {nameof(PushNextImage)}");
                 return new StatusCodeResult(503);
@@ -63,7 +63,7 @@ namespace FamilyBoardInteractive
                     [Blob(Constants.BLOBPATHIMAGESPLAYED, FileAccess.ReadWrite)] CloudBlockBlob imagesPlayedStorageBlob,
                     ILogger log)
         {
-            if (DateTime.UtcNow > msaToken.Expires) // token invalid
+            if (msaToken.NeedsRefresh) // token invalid
             {
                 await refreshTokenMessage.AddAsync($"initiated by {nameof(QueuedPushNextImage)}");
                 return;
@@ -148,7 +148,7 @@ namespace FamilyBoardInteractive
 
                     imagesPlayedStorageNew = MergeImagesPlayed(imageList, imagesPlayedStorage);
 
-                    imagesPlayedStorageNew.ImagesPlayed = imagesPlayedStorageNew.ImagesPlayed.OrderBy(i => i.Count).ToList();
+                    imagesPlayedStorageNew.ImagesPlayed = imagesPlayedStorageNew.ImagesPlayed.OrderBy(i => i.Count).ThenBy(i => i.LastPlayed).ToList();
 
                     int upperBound = imagesPlayedStorageNew.ImagesPlayed.Count / 3;
                     if (upperBound > imagesPlayedStorageNew.ImagesPlayed.Count)
@@ -168,6 +168,7 @@ namespace FamilyBoardInteractive
                     }
 
                     imagesPlayedStorageNew.ImagesPlayed[randomImageIndex].Count++;
+                    imagesPlayedStorageNew.ImagesPlayed[randomImageIndex].LastPlayed = DateTime.UtcNow;
                 }
             }
 

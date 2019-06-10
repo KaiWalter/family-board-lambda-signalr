@@ -18,8 +18,11 @@ namespace FamilyBoardInteractive.UnitTests
         {
             // arrange
             var service = new GoogleCalendarService(
-                    serviceAccount: TestContext.Parameters["GOOGLE_SERVICE_ACCOUNT"],
-                    certificateThumbprint: TestContext.Parameters["GOOGLE_CERTIFICATE_THUMBPRINT"],
+                    googleToken: new TokenEntity()
+                    {
+                        TokenType = "Bearer",
+                        AccessToken = TestContext.Parameters["GOOGLE_TEST_TOKEN"]
+                    },
                     calendarId: TestContext.Parameters["GOOGLE_CALENDAR_ID"]
                 );
 
@@ -35,8 +38,11 @@ namespace FamilyBoardInteractive.UnitTests
         {
             // arrange
             var service = new GoogleCalendarService(
-                    serviceAccount: TestContext.Parameters["GOOGLE_SERVICE_ACCOUNT"],
-                    certificateThumbprint: TestContext.Parameters["GOOGLE_CERTIFICATE_THUMBPRINT"],
+                    googleToken: new TokenEntity()
+                    {
+                        TokenType = "Bearer",
+                        AccessToken = TestContext.Parameters["GOOGLE_TEST_TOKEN"]
+                    },
                     calendarId: TestContext.Parameters["GOOGLE_CALENDAR_ID"]
                 );
 
@@ -56,7 +62,7 @@ namespace FamilyBoardInteractive.UnitTests
         {
             // arrange
             var service = new OutlookCalendarService(
-                    msaToken: new MSAToken()
+                    msaToken: new TokenEntity()
                     {
                         TokenType = "bearer",
                         AccessToken = TestContext.Parameters["OUTLOOK_TEST_TOKEN"]
@@ -75,7 +81,7 @@ namespace FamilyBoardInteractive.UnitTests
         {
             // arrange
             var service = new OutlookCalendarService(
-                    msaToken: new MSAToken()
+                    msaToken: new TokenEntity()
                     {
                         TokenType = "bearer",
                         AccessToken = TestContext.Parameters["OUTLOOK_TEST_TOKEN"]
@@ -98,8 +104,8 @@ namespace FamilyBoardInteractive.UnitTests
         {
             // arrange
             var service = new PublicHolidaysService();
-            var start = new DateTime(2018,12,23);
-            var end = new DateTime(2019,1,2);
+            var start = new DateTime(2018, 12, 23);
+            var end = new DateTime(2019, 1, 2);
 
             // act
             var result = await service.GetEvents(start, end);

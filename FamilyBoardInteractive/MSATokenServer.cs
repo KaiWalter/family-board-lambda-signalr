@@ -31,8 +31,8 @@ namespace FamilyBoardInteractive
             var outputToken = JsonConvert.DeserializeObject<TokenEntity>(token);
             if (inputToken == null)
             {
-                outputToken.PartitionKey = "Token";
-                outputToken.RowKey = "MSA";
+                outputToken.PartitionKey = Constants.TOKEN_PARTITIONKEY;
+                outputToken.RowKey = Constants.MSATOKEN_ROWKEY;
             }
             else
             {
@@ -60,7 +60,7 @@ namespace FamilyBoardInteractive
                 throw new ArgumentNullException($"{nameof(RefreshMSAToken)} {nameof(inputToken.RefreshToken)}");
             }
 
-            if (DateTime.UtcNow < inputToken.Expires.AddMinutes(-5)) // token still valid 5 min before expiry
+            if (!inputToken.NeedsRefresh)
             {
                 return null;
             }

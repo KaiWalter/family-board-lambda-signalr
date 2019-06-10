@@ -1,13 +1,9 @@
 ﻿using FamilyBoardInteractive.Models;
-using FamilyBoardInteractive.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.SignalRService;
-using Microsoft.WindowsAzure.Storage.Blob;
 using System;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace FamilyBoardInteractive
@@ -47,9 +43,10 @@ namespace FamilyBoardInteractive
         public static Task UpdateCalendar(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post")]object message,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.GOOGLETOKEN_ROWKEY)] TokenEntity googleToken,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = CalendarServer.GetCalendars(msaToken).GetAwaiter().GetResult();
+            var events = CalendarServer.GetCalendars(msaToken,googleToken).GetAwaiter().GetResult();
 
             return signalRMessages.AddAsync(
                 new SignalRMessage
@@ -77,9 +74,10 @@ namespace FamilyBoardInteractive
         public static Task QueuedCalendarUpdate(
             [QueueTrigger(Constants.QUEUEMESSAGEUPDATECALENDER)]string queueMessage,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.GOOGLETOKEN_ROWKEY)] TokenEntity googleToken,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = CalendarServer.GetCalendars(msaToken).GetAwaiter().GetResult();
+            var events = CalendarServer.GetCalendars(msaToken,googleToken).GetAwaiter().GetResult();
 
             return signalRMessages.AddAsync(
                 new SignalRMessage

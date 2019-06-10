@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 
 namespace FamilyBoardInteractive.Models
 {
@@ -8,5 +9,7 @@ namespace FamilyBoardInteractive.Models
         [JsonIgnore]
         public string ImageUrl { get; set; }
         public int Count { get; set; }
+
+        public DateTime LastPlayed { get; set; }
     }
 }

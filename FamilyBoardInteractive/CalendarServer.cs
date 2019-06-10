@@ -8,7 +8,7 @@ namespace FamilyBoardInteractive
 {
     public static class CalendarServer
     {
-        public static async Task<System.Collections.Generic.List<Models.CalendarEntry>> GetCalendars(TokenEntity msaToken)
+        public static async Task<System.Collections.Generic.List<Models.CalendarEntry>> GetCalendars(TokenEntity msaToken, TokenEntity googleToken)
         {
             var start = DateTime.Now.Date.AddDays(-7);
             var end = DateTime.Now.Date.AddDays(Constants.CalendarWeeks * 7);
@@ -28,8 +28,7 @@ namespace FamilyBoardInteractive
                 events.AddRange(deduplicatedHolidays);
 
                 var googleCalendarService = new GoogleCalendarService(
-                    serviceAccount: Util.GetEnvironmentVariable("GOOGLE_SERVICE_ACCOUNT"),
-                    certificateThumbprint: Util.GetEnvironmentVariable("GOOGLE_CERTIFICATE_THUMBPRINT"),
+                    googleToken,
                     calendarId: Util.GetEnvironmentVariable("GOOGLE_CALENDAR_ID"),
                     timeZone: Util.GetEnvironmentVariable("CALENDAR_TIMEZONE"));
                 var googleEvents = await googleCalendarService.GetEvents(start, end, isPrimary: true);

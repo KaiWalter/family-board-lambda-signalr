@@ -24,5 +24,14 @@ namespace FamilyBoardInteractive.Models
 
         [JsonProperty("user_id")]
         public string UserId { get; set; }
+
+        [JsonIgnore]
+        public bool NeedsRefresh
+        {
+            get
+            {
+                return DateTime.UtcNow > Expires.AddMinutes(-5);
+            }
+        }
     }
 }

@@ -17,6 +17,7 @@ namespace FamilyBoardInteractive
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.GOOGLETOKEN_ROWKEY)] TokenEntity googleToken,
             ILogger log)
         {
             string googleCalendarResult;
@@ -26,12 +27,11 @@ namespace FamilyBoardInteractive
             // check Google calendar
             try
             {
-                var calenderService = new GoogleCalendarService(
-                    serviceAccount: Util.GetEnvironmentVariable("GOOGLE_SERVICE_ACCOUNT"),
-                    certificateThumbprint: Util.GetEnvironmentVariable("GOOGLE_CERTIFICATE_THUMBPRINT"),
+                var calendarService = new GoogleCalendarService(
+                    googleToken,
                     calendarId: Util.GetEnvironmentVariable("GOOGLE_CALENDAR_ID"),
                     timeZone: Util.GetEnvironmentVariable("CALENDAR_TIMEZONE"));
-                var result = await calenderService.GetEventsSample();
+                var result = await calendarService.GetEventsSample();
                 googleCalendarResult = result?.Count.ToString() ?? "empty resultset";
                 log.LogInformation(googleCalendarResult);
             }
@@ -45,9 +45,9 @@ namespace FamilyBoardInteractive
             // check Outlook calender
             try
             {
-                var calenderService = new OutlookCalendarService(msaToken,
+                var calendarService = new OutlookCalendarService(msaToken,
                    timeZone: Util.GetEnvironmentVariable("CALENDAR_TIMEZONE"));
-                var result = await calenderService.GetEventsSample();
+                var result = await calendarService.GetEventsSample();
                 outlookCalendarResult = result?.Count.ToString() ?? "empty resultset";
                 log.LogInformation(googleCalendarResult);
             }
