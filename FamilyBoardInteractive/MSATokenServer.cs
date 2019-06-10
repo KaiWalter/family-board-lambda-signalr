@@ -26,7 +26,7 @@ namespace FamilyBoardInteractive
 
             var tokenCreated = DateTime.UtcNow;
 
-            var token = await AccessTokenFromCode(code);
+            var token = await AccessTokenFromCode(code, log);
 
             var outputToken = JsonConvert.DeserializeObject<MSAToken>(token);
             if (inputToken == null)
@@ -67,7 +67,7 @@ namespace FamilyBoardInteractive
 
             var tokenCreated = DateTime.UtcNow;
 
-            var token = await AccessTokenFromRefreshToken(inputToken.RefreshToken);
+            var token = await AccessTokenFromRefreshToken(inputToken.RefreshToken, log);
 
             var outputToken = JsonConvert.DeserializeObject<MSAToken>(token);
             outputToken.ETag = inputToken.ETag;
@@ -79,7 +79,7 @@ namespace FamilyBoardInteractive
             return outputToken;
         }
 
-        private static async Task<string> AccessTokenFromCode(string code)
+        private static async Task<string> AccessTokenFromCode(string code, ILogger log)
         {
             string result = string.Empty;
 
@@ -101,12 +101,17 @@ namespace FamilyBoardInteractive
                 {
                     result = await tokenResponse.Content.ReadAsStringAsync();
                 }
+                else
+                {
+                    var errorMessage = await tokenResponse.Content.ReadAsStringAsync();
+                    log.LogError(errorMessage);
+                }
             }
 
             return result;
         }
 
-        internal static async Task<string> AccessTokenFromRefreshToken(string refreshToken)
+        internal static async Task<string> AccessTokenFromRefreshToken(string refreshToken, ILogger log)
         {
             string result = string.Empty;
 
@@ -127,6 +132,11 @@ namespace FamilyBoardInteractive
                 if (tokenResponse.IsSuccessStatusCode)
                 {
                     result = await tokenResponse.Content.ReadAsStringAsync();
+                }
+                else
+                {
+                    var errorMessage = await tokenResponse.Content.ReadAsStringAsync();
+                    log.LogError(errorMessage);
                 }
             }
 
