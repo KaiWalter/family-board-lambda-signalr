@@ -4,7 +4,7 @@ using System;
 
 namespace FamilyBoardInteractive.Models
 {
-    public class MSAToken : TableEntity
+    public class TokenEntity : TableEntity
     {
         public DateTime Created { get; set; }
 

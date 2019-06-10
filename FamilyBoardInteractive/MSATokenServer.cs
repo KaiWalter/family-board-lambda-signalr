@@ -17,9 +17,9 @@ namespace FamilyBoardInteractive
 
         [FunctionName(nameof(StoreMSAToken))]
         [return: Table("Tokens")]
-        public static async Task<MSAToken> StoreMSAToken(
+        public static async Task<TokenEntity> StoreMSAToken(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
-            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken inputToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity inputToken,
             ILogger log)
         {
             string code = req.Query["code"];
@@ -28,7 +28,7 @@ namespace FamilyBoardInteractive
 
             var token = await AccessTokenFromCode(code);
 
-            var outputToken = JsonConvert.DeserializeObject<MSAToken>(token);
+            var outputToken = JsonConvert.DeserializeObject<TokenEntity>(token);
             if (inputToken == null)
             {
                 outputToken.PartitionKey = "Token";
@@ -50,9 +50,9 @@ namespace FamilyBoardInteractive
         [FunctionName(nameof(RefreshMSAToken))]
         [Singleton(Mode = SingletonMode.Listener)]
         [return: Table("Tokens")]
-        public static async Task<MSAToken> RefreshMSAToken(
+        public static async Task<TokenEntity> RefreshMSAToken(
             [QueueTrigger(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] string queueMessage,
-            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken inputToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity inputToken,
             ILogger log)
         {
             if (inputToken?.RefreshToken == null)
@@ -69,7 +69,7 @@ namespace FamilyBoardInteractive
 
             var token = await AccessTokenFromRefreshToken(inputToken.RefreshToken);
 
-            var outputToken = JsonConvert.DeserializeObject<MSAToken>(token);
+            var outputToken = JsonConvert.DeserializeObject<TokenEntity>(token);
             outputToken.ETag = inputToken.ETag;
             outputToken.PartitionKey = inputToken.PartitionKey;
             outputToken.RowKey = inputToken.RowKey;

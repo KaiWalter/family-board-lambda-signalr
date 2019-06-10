@@ -8,7 +8,7 @@ namespace FamilyBoardInteractive
 {
     public static class CalendarServer
     {
-        public static async Task<System.Collections.Generic.List<Models.CalendarEntry>> GetCalendars(MSAToken msaToken)
+        public static async Task<System.Collections.Generic.List<Models.CalendarEntry>> GetCalendars(TokenEntity msaToken)
         {
             var start = DateTime.Now.Date.AddDays(-7);
             var end = DateTime.Now.Date.AddDays(Constants.CalendarWeeks * 7);

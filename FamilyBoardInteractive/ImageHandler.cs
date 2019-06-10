@@ -32,7 +32,7 @@ namespace FamilyBoardInteractive
         [FunctionName(nameof(PushNextImage))]
         public static async Task<IActionResult> PushNextImage(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
             [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
             [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
                     [Blob(Constants.BLOBPATHIMAGESPLAYED, FileAccess.ReadWrite)] CloudBlockBlob imagesPlayedStorageBlob,
@@ -57,7 +57,7 @@ namespace FamilyBoardInteractive
         [Singleton(Mode = SingletonMode.Listener)]
         public static async Task QueuedPushNextImage(
                     [QueueTrigger(Constants.QUEUEMESSAGEPUSHIMAGE)]string queueMessage,
-                    [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
+                    [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
                     [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
                     [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
                     [Blob(Constants.BLOBPATHIMAGESPLAYED, FileAccess.ReadWrite)] CloudBlockBlob imagesPlayedStorageBlob,
@@ -105,7 +105,7 @@ namespace FamilyBoardInteractive
             }
         }
 
-        private static async Task<string> ProcessNextImage(MSAToken msaToken, IAsyncCollector<string> updateImageMessage, string imagesPlayedStorageIn)
+        private static async Task<string> ProcessNextImage(TokenEntity msaToken, IAsyncCollector<string> updateImageMessage, string imagesPlayedStorageIn)
         {
             var (imageStream, imagesPlayedStorage) = await GetNextBlobImage(msaToken, JsonConvert.DeserializeObject<ImagesPlayedStorage>(imagesPlayedStorageIn));
 
@@ -130,7 +130,7 @@ namespace FamilyBoardInteractive
             return JsonConvert.SerializeObject(imagesPlayedStorage);
         }
 
-        private static async Task<(Stream, ImagesPlayedStorage)> GetNextBlobImage(MSAToken msaToken, ImagesPlayedStorage imagesPlayedStorage)
+        private static async Task<(Stream, ImagesPlayedStorage)> GetNextBlobImage(TokenEntity msaToken, ImagesPlayedStorage imagesPlayedStorage)
         {
             Stream imageResult = null;
             ImagesPlayedStorage imagesPlayedStorageNew = null;

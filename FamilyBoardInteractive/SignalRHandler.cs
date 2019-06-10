@@ -46,7 +46,7 @@ namespace FamilyBoardInteractive
         [FunctionName(nameof(UpdateCalendar))]
         public static Task UpdateCalendar(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post")]object message,
-            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
             var events = CalendarServer.GetCalendars(msaToken).GetAwaiter().GetResult();
@@ -76,7 +76,7 @@ namespace FamilyBoardInteractive
         [Singleton(Mode = SingletonMode.Listener)]
         public static Task QueuedCalendarUpdate(
             [QueueTrigger(Constants.QUEUEMESSAGEUPDATECALENDER)]string queueMessage,
-            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
             var events = CalendarServer.GetCalendars(msaToken).GetAwaiter().GetResult();
