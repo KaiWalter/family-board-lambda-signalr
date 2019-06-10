@@ -60,7 +60,7 @@ namespace FamilyBoardInteractive
                 throw new ArgumentNullException($"{nameof(RefreshMSAToken)} {nameof(inputToken.RefreshToken)}");
             }
 
-            if (DateTime.UtcNow < inputToken.Expires.AddMinutes(5)) // token still valid
+            if (DateTime.UtcNow < inputToken.Expires.AddMinutes(-5)) // token still valid 5 min before expiry
             {
                 return null;
             }

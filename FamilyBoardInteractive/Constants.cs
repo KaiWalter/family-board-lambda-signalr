@@ -11,8 +11,12 @@
         public const string QUEUEMESSAGEUPDATECALENDER = "updatecalendar";
         public const string QUEUEMESSAGEUPDATEIMAGE = "updateimage";
         public const string QUEUEMESSAGEPUSHIMAGE = "pushimage";
+        public const string QUEUEMESSAGECONFIGURUATION = "configuration";
 
         public const string BLOBPATHBOARDIMAGE = "images/boardimage.jpg";
+        public const string BLOBPATHCONTAINER = "familyboard";
+        public const string BLOBPATHIMAGESPLAYED = "familyboard/playedimages.json";
+        public const string BLOBCONTENTTYPEIMAGESPLAYED = "application/json";
 
         public const string TOKEN_TABLE = "Tokens";
         public const string TOKEN_PARTITIONKEY = "Token";

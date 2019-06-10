@@ -4,8 +4,6 @@ using System.Text.RegularExpressions;
 
 namespace FamilyBoardInteractive
 {
-
-
     public static class Util
     {
         public static string GetApplicationRoot()

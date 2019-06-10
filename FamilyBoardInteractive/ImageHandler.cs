@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.WindowsAzure.Storage.Blob;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
@@ -11,6 +13,7 @@ using SixLabors.ImageSharp.MetaData.Profiles.Exif;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -32,6 +35,7 @@ namespace FamilyBoardInteractive
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
             [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
             [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
+                    [Blob(Constants.BLOBPATHIMAGESPLAYED, FileAccess.ReadWrite)] CloudBlockBlob imagesPlayedStorageBlob,
             ILogger log)
         {
             if (DateTime.UtcNow > msaToken.Expires) // token invalid
@@ -40,7 +44,11 @@ namespace FamilyBoardInteractive
                 return new StatusCodeResult(503);
             }
 
-            await ProcessNextImage(msaToken, updateImageMessage);
+            var imagesPlayedStorage = await imagesPlayedStorageBlob.DownloadTextAsync();
+
+            imagesPlayedStorage = await ProcessNextImage(msaToken, updateImageMessage, imagesPlayedStorage);
+
+            await imagesPlayedStorageBlob.UploadTextAsync(imagesPlayedStorage);
 
             return new OkResult();
         }
@@ -48,11 +56,12 @@ namespace FamilyBoardInteractive
         [FunctionName(nameof(QueuedPushNextImage))]
         [Singleton(Mode = SingletonMode.Listener)]
         public static async Task QueuedPushNextImage(
-            [QueueTrigger(Constants.QUEUEMESSAGEPUSHIMAGE)]string queueMessage,
-            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
-            [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
-            [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
-            ILogger log)
+                    [QueueTrigger(Constants.QUEUEMESSAGEPUSHIMAGE)]string queueMessage,
+                    [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
+                    [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
+                    [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
+                    [Blob(Constants.BLOBPATHIMAGESPLAYED, FileAccess.ReadWrite)] CloudBlockBlob imagesPlayedStorageBlob,
+                    ILogger log)
         {
             if (DateTime.UtcNow > msaToken.Expires) // token invalid
             {
@@ -60,7 +69,11 @@ namespace FamilyBoardInteractive
                 return;
             }
 
-            await ProcessNextImage(msaToken, updateImageMessage);
+            var imagesPlayedStorage = await imagesPlayedStorageBlob.DownloadTextAsync();
+
+            imagesPlayedStorage = await ProcessNextImage(msaToken, updateImageMessage, imagesPlayedStorage);
+
+            await imagesPlayedStorageBlob.UploadTextAsync(imagesPlayedStorage);
         }
 
         [FunctionName("ImageServer")]
@@ -70,7 +83,7 @@ namespace FamilyBoardInteractive
         {
             // check key
             var keyEncrypted = req.Query.FirstOrDefault(q => string.Compare(q.Key, "key", true) == 0).Value[0];
-            var keyDecrypted = Services.Encrypt.DecryptString(keyEncrypted, 
+            var keyDecrypted = Services.Encrypt.DecryptString(keyEncrypted,
                 initVector: Util.GetEnvironmentVariable("ENCRYPTION_INITVECTOR"),
                 passPhrase: Util.GetEnvironmentVariable("IMAGE_PASSPHRASE"));
             var expiration = DateTime.Parse(keyDecrypted);
@@ -92,9 +105,9 @@ namespace FamilyBoardInteractive
             }
         }
 
-        private static async Task ProcessNextImage(MSAToken msaToken, IAsyncCollector<string> updateImageMessage)
+        private static async Task<string> ProcessNextImage(MSAToken msaToken, IAsyncCollector<string> updateImageMessage, string imagesPlayedStorageIn)
         {
-            var imageStream = await GetNextBlobImage(msaToken);
+            var (imageStream, imagesPlayedStorage) = await GetNextBlobImage(msaToken, JsonConvert.DeserializeObject<ImagesPlayedStorage>(imagesPlayedStorageIn));
 
             string tempFile = Path.Combine(Util.GetImagePath(), "image.png");
 
@@ -103,7 +116,7 @@ namespace FamilyBoardInteractive
                 imageStream.CopyTo(fileOutputStream);
             }
 
-            string key = Services.Encrypt.EncryptString(DateTime.UtcNow.AddMinutes(1).ToString("u"), 
+            string key = Services.Encrypt.EncryptString(DateTime.UtcNow.AddMinutes(1).ToString("u"),
                 initVector: Util.GetEnvironmentVariable("ENCRYPTION_INITVECTOR"),
                 passPhrase: Util.GetEnvironmentVariable("IMAGE_PASSPHRASE"));
 
@@ -113,11 +126,14 @@ namespace FamilyBoardInteractive
             };
 
             await updateImageMessage.AddAsync(imageObject.ToString());
+
+            return JsonConvert.SerializeObject(imagesPlayedStorage);
         }
 
-        private static async Task<Stream> GetNextBlobImage(MSAToken msaToken)
+        private static async Task<(Stream, ImagesPlayedStorage)> GetNextBlobImage(MSAToken msaToken, ImagesPlayedStorage imagesPlayedStorage)
         {
             Stream imageResult = null;
+            ImagesPlayedStorage imagesPlayedStorageNew = null;
 
             using (var client = new HttpClient())
             {
@@ -130,9 +146,19 @@ namespace FamilyBoardInteractive
                     var imageListPayload = await imageListResponse.Content.ReadAsStringAsync();
                     var imageList = (JArray)JObject.Parse(imageListPayload)["value"];
 
-                    JObject imageObject = FindRandomImage(imageList);
+                    imagesPlayedStorageNew = MergeImagesPlayed(imageList, imagesPlayedStorage);
 
-                    var imagePath = imageObject["@microsoft.graph.downloadUrl"].Value<string>();
+                    imagesPlayedStorageNew.ImagesPlayed = imagesPlayedStorageNew.ImagesPlayed.OrderBy(i => i.Count).ToList();
+
+                    int upperBound = imagesPlayedStorageNew.ImagesPlayed.Count / 3;
+                    if (upperBound > imagesPlayedStorageNew.ImagesPlayed.Count)
+                    {
+                        upperBound = imagesPlayedStorageNew.ImagesPlayed.Count;
+                    }
+
+                    var randomImageIndex = Between(0, upperBound - 1);
+
+                    var imagePath = imagesPlayedStorageNew.ImagesPlayed[randomImageIndex].ImageUrl;
 
                     using (var webClient = new WebClient())
                     {
@@ -140,27 +166,57 @@ namespace FamilyBoardInteractive
                         imageBytes = TransformImage(imageBytes);
                         imageResult = new MemoryStream(imageBytes);
                     }
+
+                    imagesPlayedStorageNew.ImagesPlayed[randomImageIndex].Count++;
                 }
             }
 
-            return imageResult;
+            return (imageResult, imagesPlayedStorageNew);
         }
 
-        private static JObject FindRandomImage(JArray imageList)
+        private static ImagesPlayedStorage MergeImagesPlayed(JArray imageList, ImagesPlayedStorage imagesPlayedStorage)
         {
-            string imageMimeType = string.Empty;
-            JObject imageObject = null;
+            var imagesPlayedStorageResult = new ImagesPlayedStorage { ImagesPlayed = new List<ImagePlayed>() };
 
-            while (imageMimeType.CompareTo("image/jpeg") != 0)
+            foreach (var imageToken in imageList)
             {
-                //var randomImageIndex = new Random().Next(imageList.Count);
-                var randomImageIndex = Between(0, imageList.Count-1);
-                imageObject = (JObject)(imageList[randomImageIndex]);
-                var imageFile = (JObject)imageObject["file"];
-                imageMimeType = imageFile["mimeType"].Value<string>();
+                JObject imageObject = (JObject)imageToken;
+
+                if(imageObject["name"] == null || imageObject["@microsoft.graph.downloadUrl"] == null || imageObject["file"] == null)
+                {
+
+                }
+                else
+                {
+                    var imageName = imageObject["name"].Value<string>();
+                    var imagePath = imageObject["@microsoft.graph.downloadUrl"].Value<string>();
+                    var imageFile = (JObject)imageObject["file"];
+                    var imageMimeType = imageFile["mimeType"].Value<string>();
+
+                    if (imageMimeType.CompareTo("image/jpeg") == 0)
+                    {
+                        var imagePlayed = imagesPlayedStorage.ImagesPlayed.FirstOrDefault(i => i.ImageName == imageName);
+
+                        if(imagePlayed == null)
+                        {
+                            imagePlayed = new ImagePlayed()
+                            {
+                                ImageName = imageName,
+                                ImageUrl = imagePath,
+                                Count = 0
+                            };
+                        }
+                        else
+                        {
+                            imagePlayed.ImageUrl = imagePath;
+                        }
+
+                        imagesPlayedStorageResult.ImagesPlayed.Add(imagePlayed);
+                    }
+                }
             }
 
-            return imageObject;
+            return imagesPlayedStorageResult;
         }
 
         private static byte[] TransformImage(byte[] imageInBytes)
