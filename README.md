@@ -2,13 +2,13 @@
 
 > UNDER CONSTRUCTION
 
-A family calendar / kitchen board which will one day show information
+A family calendar / kitchen board which shows information from
 
 - from a Google Calendar
 - from an Outlook Calendar
 - random images from OneDrive
 
-The app will be put into a container and deployed to Rasberry Pi W.
+This app is access from a Rasberry Pi W an replaces the [family board previously used](https://www.hanselman.com/blog/HowToBuildAWallMountedFamilyCalendarAndDashboardWithARaspberryPiAndCheapMonitor.aspx).
 
 ## Architecture
 
