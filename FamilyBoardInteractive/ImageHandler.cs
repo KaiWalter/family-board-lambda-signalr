@@ -146,17 +146,18 @@ namespace FamilyBoardInteractive
                     var imageListPayload = await imageListResponse.Content.ReadAsStringAsync();
                     var imageList = (JArray)JObject.Parse(imageListPayload)["value"];
 
+                    // merge list returned with images already played
                     imagesPlayedStorageNew = MergeImagesPlayed(imageList, imagesPlayedStorage);
 
+                    // takee image only from top 1/3rd
                     imagesPlayedStorageNew.ImagesPlayed = imagesPlayedStorageNew.ImagesPlayed.OrderBy(i => i.Count).ToList();
-
                     int upperBound = imagesPlayedStorageNew.ImagesPlayed.Count / 3;
                     if (upperBound > imagesPlayedStorageNew.ImagesPlayed.Count)
                     {
                         upperBound = imagesPlayedStorageNew.ImagesPlayed.Count;
                     }
 
-                    var randomImageIndex = Between(0, upperBound - 1);
+                    var randomImageIndex = RandomBetween(0, upperBound - 1);
 
                     var imagePath = imagesPlayedStorageNew.ImagesPlayed[randomImageIndex].ImageUrl;
 
@@ -174,6 +175,12 @@ namespace FamilyBoardInteractive
             return (imageResult, imagesPlayedStorageNew);
         }
 
+        /// <summary>
+        /// merge list returned with images already played
+        /// </summary>
+        /// <param name="imageList">list of images returned from service</param>
+        /// <param name="imagesPlayedStorage">storage of images already played</param>
+        /// <returns>merged list</returns>
         private static ImagesPlayedStorage MergeImagesPlayed(JArray imageList, ImagesPlayedStorage imagesPlayedStorage)
         {
             var imagesPlayedStorageResult = new ImagesPlayedStorage { ImagesPlayed = new List<ImagePlayed>() };
@@ -296,7 +303,7 @@ namespace FamilyBoardInteractive
         /// <param name="minimumValue"></param>
         /// <param name="maximumValue"></param>
         /// <returns></returns>
-        private static int Between(int minimumValue, int maximumValue)
+        private static int RandomBetween(int minimumValue, int maximumValue)
         {
             byte[] randomNumber = new byte[1];
 
