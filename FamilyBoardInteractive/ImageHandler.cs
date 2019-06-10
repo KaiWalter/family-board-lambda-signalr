@@ -35,7 +35,7 @@ namespace FamilyBoardInteractive
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
             [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
             [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
-                    [Blob(Constants.BLOBPATHIMAGESPLAYED, FileAccess.ReadWrite)] CloudBlockBlob imagesPlayedStorageBlob,
+            [Blob(Constants.BLOBPATHIMAGESPLAYED, FileAccess.ReadWrite)] CloudBlockBlob imagesPlayedStorageBlob,
             ILogger log)
         {
             if (msaToken.NeedsRefresh) // token invalid
@@ -183,7 +183,7 @@ namespace FamilyBoardInteractive
             {
                 JObject imageObject = (JObject)imageToken;
 
-                if(imageObject["name"] == null || imageObject["@microsoft.graph.downloadUrl"] == null || imageObject["file"] == null)
+                if (imageObject["name"] == null || imageObject["@microsoft.graph.downloadUrl"] == null || imageObject["file"] == null)
                 {
 
                 }
@@ -198,7 +198,7 @@ namespace FamilyBoardInteractive
                     {
                         var imagePlayed = imagesPlayedStorage.ImagesPlayed.FirstOrDefault(i => i.ImageName == imageName);
 
-                        if(imagePlayed == null)
+                        if (imagePlayed == null)
                         {
                             imagePlayed = new ImagePlayed()
                             {

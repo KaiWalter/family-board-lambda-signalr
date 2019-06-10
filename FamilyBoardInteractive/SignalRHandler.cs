@@ -42,11 +42,33 @@ namespace FamilyBoardInteractive
         [FunctionName(nameof(UpdateCalendar))]
         public static Task UpdateCalendar(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post")]object message,
+            [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] out string refreshMSATokenMessage,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
+            [Queue(Constants.QUEUEMESSAGEREFRESHGOOGLETOKEN)] out string refreshGoogleTokenMessage,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.GOOGLETOKEN_ROWKEY)] TokenEntity googleToken,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = CalendarServer.GetCalendars(msaToken,googleToken).GetAwaiter().GetResult();
+            refreshMSATokenMessage = refreshGoogleTokenMessage = null;
+            bool waitForTokenRefresh = false;
+
+            if (msaToken.NeedsRefresh)
+            {
+                refreshMSATokenMessage = $"initiated by {nameof(UpdateCalendar)}";
+                waitForTokenRefresh = true;
+            }
+
+            if (googleToken.NeedsRefresh)
+            {
+                refreshGoogleTokenMessage = $"initiated by {nameof(UpdateCalendar)}";
+                waitForTokenRefresh = true;
+            }
+
+            if (waitForTokenRefresh)
+            {
+                return Task.FromResult(0);
+            }
+
+            var events = CalendarServer.GetCalendars(msaToken, googleToken).GetAwaiter().GetResult();
 
             return signalRMessages.AddAsync(
                 new SignalRMessage
@@ -73,11 +95,33 @@ namespace FamilyBoardInteractive
         [Singleton(Mode = SingletonMode.Listener)]
         public static Task QueuedCalendarUpdate(
             [QueueTrigger(Constants.QUEUEMESSAGEUPDATECALENDER)]string queueMessage,
+            [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] out string refreshMSATokenMessage,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
+            [Queue(Constants.QUEUEMESSAGEREFRESHGOOGLETOKEN)] out string refreshGoogleTokenMessage,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.GOOGLETOKEN_ROWKEY)] TokenEntity googleToken,
             [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = CalendarServer.GetCalendars(msaToken,googleToken).GetAwaiter().GetResult();
+            refreshMSATokenMessage = refreshGoogleTokenMessage = null;
+            bool waitForTokenRefresh = false;
+
+            if (msaToken.NeedsRefresh)
+            {
+                refreshMSATokenMessage = $"initiated by {nameof(QueuedCalendarUpdate)}";
+                waitForTokenRefresh = true;
+            }
+
+            if (googleToken.NeedsRefresh)
+            {
+                refreshGoogleTokenMessage = $"initiated by {nameof(QueuedCalendarUpdate)}";
+                waitForTokenRefresh = true;
+            }
+
+            if (waitForTokenRefresh)
+            {
+                return Task.FromResult(0);
+            }
+
+            var events = CalendarServer.GetCalendars(msaToken, googleToken).GetAwaiter().GetResult();
 
             return signalRMessages.AddAsync(
                 new SignalRMessage
