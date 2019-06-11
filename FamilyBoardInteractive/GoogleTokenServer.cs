@@ -73,6 +73,7 @@ namespace FamilyBoardInteractive
             outputToken.ETag = inputToken.ETag;
             outputToken.PartitionKey = inputToken.PartitionKey;
             outputToken.RowKey = inputToken.RowKey;
+            outputToken.RefreshToken = inputToken.RefreshToken; // Google RefreshToken can be re-used
             outputToken.Created = tokenCreated;
             outputToken.Expires = tokenCreated.AddSeconds(outputToken.ExpiresIn);
 
