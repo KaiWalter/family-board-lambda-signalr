@@ -1,6 +1,5 @@
 using FamilyBoardInteractive.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
@@ -26,7 +25,6 @@ namespace FamilyBoardInteractive
 {
     public static class ImageHandler
     {
-        const string ONEDRIVEPATH = "https://graph.microsoft.com/v1.0/me/drive/root:/{0}:/children";
         private static readonly RNGCryptoServiceProvider Randomizer = new RNGCryptoServiceProvider();
 
         [FunctionName(nameof(RollImageActivity))]
@@ -131,7 +129,7 @@ namespace FamilyBoardInteractive
 
             using (var client = new HttpClient())
             {
-                var imageListRequest = new HttpRequestMessage(HttpMethod.Get, string.Format(ONEDRIVEPATH, "Dakboard"));
+                var imageListRequest = new HttpRequestMessage(HttpMethod.Get, string.Format(Constants.ONEDRIVEPATH, Util.GetEnvironmentVariable("ONEDRIVE_FOLDER")));
                 imageListRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(msaToken.TokenType, msaToken.AccessToken);
 
                 var imageListResponse = await client.SendAsync(imageListRequest);

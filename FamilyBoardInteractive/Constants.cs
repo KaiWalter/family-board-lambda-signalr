@@ -21,5 +21,7 @@
 
         internal const string GOOGLE_TOKEN_URI = "https://www.googleapis.com/oauth2/v4/token";
         internal const string MSA_TOKEN_URI = "https://login.live.com/oauth20_token.srf";
+
+        internal const string ONEDRIVEPATH = "https://graph.microsoft.com/v1.0/me/drive/root:/{0}:/children";
     }
 }
