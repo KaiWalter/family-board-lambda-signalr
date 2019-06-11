@@ -29,51 +29,22 @@ namespace FamilyBoardInteractive
         const string ONEDRIVEPATH = "https://graph.microsoft.com/v1.0/me/drive/root:/{0}:/children";
         private static readonly RNGCryptoServiceProvider Randomizer = new RNGCryptoServiceProvider();
 
-        [FunctionName(nameof(PushNextImage))]
-        public static async Task<IActionResult> PushNextImage(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
+        [FunctionName(nameof(RollImageActivity))]
+        public static async Task<string> RollImageActivity(
+            [ActivityTrigger] DurableActivityContextBase context,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
-            [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
-            [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
             [Blob(Constants.BLOBPATHIMAGESPLAYED, FileAccess.ReadWrite)] CloudBlockBlob imagesPlayedStorageBlob,
             ILogger log)
         {
-            if (msaToken.NeedsRefresh) // token invalid
-            {
-                await refreshTokenMessage.AddAsync($"initiated by {nameof(PushNextImage)}");
-                return new StatusCodeResult(503);
-            }
-
             var imagesPlayedStorage = await imagesPlayedStorageBlob.DownloadTextAsync();
 
-            imagesPlayedStorage = await ProcessNextImage(msaToken, updateImageMessage, imagesPlayedStorage);
+            string updateImageMessage;
+
+            (imagesPlayedStorage, updateImageMessage) = await ProcessNextImage(msaToken, imagesPlayedStorage);
 
             await imagesPlayedStorageBlob.UploadTextAsync(imagesPlayedStorage);
 
-            return new OkResult();
-        }
-
-        [FunctionName(nameof(QueuedPushNextImage))]
-        [Singleton(Mode = SingletonMode.Listener)]
-        public static async Task QueuedPushNextImage(
-                    [QueueTrigger(Constants.QUEUEMESSAGEPUSHIMAGE)]string queueMessage,
-                    [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
-                    [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
-                    [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
-                    [Blob(Constants.BLOBPATHIMAGESPLAYED, FileAccess.ReadWrite)] CloudBlockBlob imagesPlayedStorageBlob,
-                    ILogger log)
-        {
-            if (msaToken.NeedsRefresh) // token invalid
-            {
-                await refreshTokenMessage.AddAsync($"initiated by {nameof(QueuedPushNextImage)}");
-                return;
-            }
-
-            var imagesPlayedStorage = await imagesPlayedStorageBlob.DownloadTextAsync();
-
-            imagesPlayedStorage = await ProcessNextImage(msaToken, updateImageMessage, imagesPlayedStorage);
-
-            await imagesPlayedStorageBlob.UploadTextAsync(imagesPlayedStorage);
+            return updateImageMessage;
         }
 
         [FunctionName("ImageServer")]
@@ -128,6 +99,29 @@ namespace FamilyBoardInteractive
             await updateImageMessage.AddAsync(imageObject.ToString());
 
             return JsonConvert.SerializeObject(imagesPlayedStorage);
+        }
+
+        private static async Task<(string,string)> ProcessNextImage(TokenEntity msaToken, string imagesPlayedStorageIn)
+        {
+            var (imageStream, imagesPlayedStorage) = await GetNextBlobImage(msaToken, JsonConvert.DeserializeObject<ImagesPlayedStorage>(imagesPlayedStorageIn));
+
+            string tempFile = Path.Combine(Util.GetImagePath(), "image.png");
+
+            using (FileStream fileOutputStream = new FileStream(tempFile, FileMode.Create))
+            {
+                imageStream.CopyTo(fileOutputStream);
+            }
+
+            string key = Services.Encrypt.EncryptString(DateTime.UtcNow.AddMinutes(1).ToString("u"),
+                initVector: Util.GetEnvironmentVariable("ENCRYPTION_INITVECTOR"),
+                passPhrase: Util.GetEnvironmentVariable("IMAGE_PASSPHRASE"));
+
+            var imageObject = new JObject()
+            {
+                { "path", $"/api/ImageServer?key={HttpUtility.UrlEncode(key)}" }
+            };
+
+            return (JsonConvert.SerializeObject(imagesPlayedStorage), imageObject.ToString());
         }
 
         private static async Task<(Stream, ImagesPlayedStorage)> GetNextBlobImage(TokenEntity msaToken, ImagesPlayedStorage imagesPlayedStorage)

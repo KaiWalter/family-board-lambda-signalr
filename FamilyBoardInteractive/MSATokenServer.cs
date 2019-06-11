@@ -13,8 +13,6 @@ namespace FamilyBoardInteractive
 {
     public static class MSATokenServer
     {
-        private const string MSA_TOKEN_URI = "https://login.live.com/oauth20_token.srf";
-
         [FunctionName(nameof(StoreMSAToken))]
         [return: Table("Tokens")]
         public static async Task<TokenEntity> StoreMSAToken(
@@ -47,34 +45,34 @@ namespace FamilyBoardInteractive
             return outputToken;
         }
 
-        [FunctionName(nameof(RefreshMSAToken))]
+        [FunctionName(nameof(RefreshMSATokenActivity))]
         [Singleton(Mode = SingletonMode.Listener)]
         [return: Table("Tokens")]
-        public static async Task<TokenEntity> RefreshMSAToken(
-            [QueueTrigger(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] string queueMessage,
+        public static async Task<TokenEntity> RefreshMSATokenActivity(
+            [ActivityTrigger] DurableActivityContextBase context,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity inputToken,
             ILogger log)
         {
             if (inputToken?.RefreshToken == null)
             {
-                throw new ArgumentNullException($"{nameof(RefreshMSAToken)} {nameof(inputToken.RefreshToken)}");
+                throw new ArgumentNullException($"{nameof(RefreshMSATokenActivity)} {nameof(inputToken.RefreshToken)}");
             }
 
-            if (!inputToken.NeedsRefresh)
+            TokenEntity outputToken = null;
+
+            if (inputToken.NeedsRefresh)
             {
-                return null;
+                var tokenCreated = DateTime.UtcNow;
+
+                var token = await AccessTokenFromRefreshToken(inputToken.RefreshToken, log);
+
+                outputToken = JsonConvert.DeserializeObject<TokenEntity>(token);
+                outputToken.ETag = inputToken.ETag;
+                outputToken.PartitionKey = inputToken.PartitionKey;
+                outputToken.RowKey = inputToken.RowKey;
+                outputToken.Created = tokenCreated;
+                outputToken.Expires = tokenCreated.AddSeconds(outputToken.ExpiresIn);
             }
-
-            var tokenCreated = DateTime.UtcNow;
-
-            var token = await AccessTokenFromRefreshToken(inputToken.RefreshToken, log);
-
-            var outputToken = JsonConvert.DeserializeObject<TokenEntity>(token);
-            outputToken.ETag = inputToken.ETag;
-            outputToken.PartitionKey = inputToken.PartitionKey;
-            outputToken.RowKey = inputToken.RowKey;
-            outputToken.Created = tokenCreated;
-            outputToken.Expires = tokenCreated.AddSeconds(outputToken.ExpiresIn);
 
             return outputToken;
         }
@@ -92,7 +90,7 @@ namespace FamilyBoardInteractive
                 formValues.Add("grant_type", "authorization_code");
                 formValues.Add("redirect_uri", Util.GetEnvironmentVariable("MSA_REDIRECT_URI"));
 
-                var tokenRequest = new HttpRequestMessage(HttpMethod.Post, MSA_TOKEN_URI)
+                var tokenRequest = new HttpRequestMessage(HttpMethod.Post, Constants.MSA_TOKEN_URI)
                 {
                     Content = new FormUrlEncodedContent(formValues)
                 };
@@ -124,7 +122,7 @@ namespace FamilyBoardInteractive
                 formValues.Add("grant_type", "refresh_token");
                 formValues.Add("redirect_uri", Util.GetEnvironmentVariable("MSA_REDIRECT_URI"));
 
-                var tokenRequest = new HttpRequestMessage(HttpMethod.Post, MSA_TOKEN_URI)
+                var tokenRequest = new HttpRequestMessage(HttpMethod.Post, Constants.MSA_TOKEN_URI)
                 {
                     Content = new FormUrlEncodedContent(formValues)
                 };

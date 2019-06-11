@@ -11,12 +11,12 @@ namespace FamilyBoardInteractive
 {
     public class Storage
     {
-        [FunctionName(nameof(QueuedConfiguartionCheck))]
-        [Singleton(Mode = SingletonMode.Listener)]
-        public static async Task QueuedConfiguartionCheck(
-                [QueueTrigger(Constants.QUEUEMESSAGECONFIGURUATION)]string queueMessage,
+        [FunctionName(nameof(CheckConfigurationActivity))]
+        public static async Task CheckConfigurationActivity(
+                [ActivityTrigger] DurableActivityContextBase context,
                 [Blob(Constants.BLOBPATHCONTAINER, FileAccess.ReadWrite)] CloudBlobContainer storageContainer,
-                ILogger log)
+                ILogger log
+            )
         {
             await CheckStorageConfiguration(storageContainer, log);
         }

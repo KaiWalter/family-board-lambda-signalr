@@ -1,4 +1,4 @@
-using FamilyBoardInteractive.Models;
+﻿using FamilyBoardInteractive.Models;
 using FamilyBoardInteractive.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,11 +11,35 @@ using System.Threading.Tasks;
 
 namespace FamilyBoardInteractive
 {
-    public static class Health
+    public class HttpHandler
     {
+        [FunctionName(nameof(UpdateCalendar))]
+        public static async Task UpdateCalendar(
+            [HttpTrigger(AuthorizationLevel.Function, "post")]object message,
+            [OrchestrationClient] DurableOrchestrationClient starter)
+        {
+            await starter.StartNewAsync(nameof(Flows.CalendarUpdate), $"initiated by {nameof(UpdateCalendar)}");
+        }
+
+        [FunctionName(nameof(UpdateImage))]
+        public static async Task UpdateImage(
+            [HttpTrigger(AuthorizationLevel.Function, "post")]object message,
+            [OrchestrationClient] DurableOrchestrationClient starter)
+        {
+            await starter.StartNewAsync(nameof(Flows.ImageUpdate), $"initiated by {nameof(UpdateImage)}");
+        }
+
+        [FunctionName(nameof(SendMessage))]
+        public static async Task SendMessage(
+            [HttpTrigger(AuthorizationLevel.Function, "post")] Message message,
+            [OrchestrationClient] DurableOrchestrationClient starter)
+        {
+            await starter.StartNewAsync(nameof(Flows.MessageSend), message);
+        }
+
         [FunctionName("Health")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Admin, "get", Route = null)] HttpRequest req,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.GOOGLETOKEN_ROWKEY)] TokenEntity googleToken,
             ILogger log)
@@ -64,6 +88,12 @@ namespace FamilyBoardInteractive
                 statusCode = StatusCodes.Status424FailedDependency;
             }
 
+            // check Google Token
+            if (googleToken == null)
+            {
+                statusCode = StatusCodes.Status424FailedDependency;
+            }
+
             // assemble service info
             return statusCode == StatusCodes.Status200OK
                  ? (ActionResult)new OkObjectResult(new
@@ -75,7 +105,8 @@ namespace FamilyBoardInteractive
                      staticFilesRoot = Util.GetApplicationRoot(),
                      googleCalendarResult,
                      outlookCalendarResult,
-                     msaToken
+                     msaToken,
+                     googleToken
                  })
                  : (ActionResult)new StatusCodeResult(statusCode);
         }

@@ -13,8 +13,6 @@ namespace FamilyBoardInteractive
 {
     public static class GoogleTokenServer
     {
-        private const string GOOGLE_TOKEN_URI = "https://www.googleapis.com/oauth2/v4/token";
-
         [FunctionName(nameof(StoreGoogleToken))]
         [return: Table("Tokens")]
         public static async Task<TokenEntity> StoreGoogleToken(
@@ -47,35 +45,35 @@ namespace FamilyBoardInteractive
             return outputToken;
         }
 
-        [FunctionName(nameof(RefreshGoogleToken))]
+        [FunctionName(nameof(RefreshGoogleTokenActivity))]
         [Singleton(Mode = SingletonMode.Listener)]
         [return: Table("Tokens")]
-        public static async Task<TokenEntity> RefreshGoogleToken(
-            [QueueTrigger(Constants.QUEUEMESSAGEREFRESHGOOGLETOKEN)] string queueMessage,
+        public static async Task<TokenEntity> RefreshGoogleTokenActivity(
+            [ActivityTrigger] DurableActivityContextBase context,
             [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.GOOGLETOKEN_ROWKEY)] TokenEntity inputToken,
             ILogger log)
         {
             if (inputToken?.RefreshToken == null)
             {
-                throw new ArgumentNullException($"{nameof(RefreshGoogleToken)} {nameof(inputToken.RefreshToken)}");
+                throw new ArgumentNullException($"{nameof(RefreshGoogleTokenActivity)} {nameof(inputToken.RefreshToken)}");
             }
 
-            if (!inputToken.NeedsRefresh)
+            TokenEntity outputToken = null;
+
+            if (inputToken.NeedsRefresh)
             {
-                return null;
+                var tokenCreated = DateTime.UtcNow;
+
+                var token = await AccessTokenFromRefreshToken(inputToken.RefreshToken, log);
+
+                outputToken = JsonConvert.DeserializeObject<TokenEntity>(token);
+                outputToken.ETag = inputToken.ETag;
+                outputToken.PartitionKey = inputToken.PartitionKey;
+                outputToken.RowKey = inputToken.RowKey;
+                outputToken.RefreshToken = inputToken.RefreshToken; // Google RefreshToken can be re-used
+                outputToken.Created = tokenCreated;
+                outputToken.Expires = tokenCreated.AddSeconds(outputToken.ExpiresIn);
             }
-
-            var tokenCreated = DateTime.UtcNow;
-
-            var token = await AccessTokenFromRefreshToken(inputToken.RefreshToken, log);
-
-            var outputToken = JsonConvert.DeserializeObject<TokenEntity>(token);
-            outputToken.ETag = inputToken.ETag;
-            outputToken.PartitionKey = inputToken.PartitionKey;
-            outputToken.RowKey = inputToken.RowKey;
-            outputToken.RefreshToken = inputToken.RefreshToken; // Google RefreshToken can be re-used
-            outputToken.Created = tokenCreated;
-            outputToken.Expires = tokenCreated.AddSeconds(outputToken.ExpiresIn);
 
             return outputToken;
         }
@@ -93,7 +91,7 @@ namespace FamilyBoardInteractive
                 formValues.Add("redirect_uri", Util.GetEnvironmentVariable("GOOGLE_REDIRECT_URI"));
                 formValues.Add("grant_type", "authorization_code");
 
-                var tokenRequest = new HttpRequestMessage(HttpMethod.Post, GOOGLE_TOKEN_URI)
+                var tokenRequest = new HttpRequestMessage(HttpMethod.Post, Constants.GOOGLE_TOKEN_URI)
                 {
                     Content = new FormUrlEncodedContent(formValues)
                 };
@@ -125,7 +123,7 @@ namespace FamilyBoardInteractive
                 formValues.Add("refresh_token", refreshToken);
                 formValues.Add("grant_type", "refresh_token");
 
-                var tokenRequest = new HttpRequestMessage(HttpMethod.Post, GOOGLE_TOKEN_URI)
+                var tokenRequest = new HttpRequestMessage(HttpMethod.Post, Constants.GOOGLE_TOKEN_URI)
                 {
                     Content = new FormUrlEncodedContent(formValues)
                 };
