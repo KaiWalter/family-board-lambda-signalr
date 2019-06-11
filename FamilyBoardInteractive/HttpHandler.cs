@@ -98,7 +98,6 @@ namespace FamilyBoardInteractive
             return statusCode == StatusCodes.Status200OK
                  ? (ActionResult)new OkObjectResult(new
                  {
-                     build = Environment.GetEnvironmentVariable("FB_BUILD", EnvironmentVariableTarget.Process) ?? "",
                      home = Environment.GetEnvironmentVariable("HOME", EnvironmentVariableTarget.Process),
                      webSiteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME", EnvironmentVariableTarget.Process),
                      appRoot = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase),

@@ -74,31 +74,6 @@ namespace FamilyBoardInteractive
             }
         }
 
-        private static async Task<string> ProcessNextImage(TokenEntity msaToken, IAsyncCollector<string> updateImageMessage, string imagesPlayedStorageIn)
-        {
-            var (imageStream, imagesPlayedStorage) = await GetNextBlobImage(msaToken, JsonConvert.DeserializeObject<ImagesPlayedStorage>(imagesPlayedStorageIn));
-
-            string tempFile = Path.Combine(Util.GetImagePath(), "image.png");
-
-            using (FileStream fileOutputStream = new FileStream(tempFile, FileMode.Create))
-            {
-                imageStream.CopyTo(fileOutputStream);
-            }
-
-            string key = Services.Encrypt.EncryptString(DateTime.UtcNow.AddMinutes(1).ToString("u"),
-                initVector: Util.GetEnvironmentVariable("ENCRYPTION_INITVECTOR"),
-                passPhrase: Util.GetEnvironmentVariable("IMAGE_PASSPHRASE"));
-
-            var imageObject = new JObject()
-            {
-                { "path", $"/api/ImageServer?key={HttpUtility.UrlEncode(key)}" }
-            };
-
-            await updateImageMessage.AddAsync(imageObject.ToString());
-
-            return JsonConvert.SerializeObject(imagesPlayedStorage);
-        }
-
         private static async Task<(string,string)> ProcessNextImage(TokenEntity msaToken, string imagesPlayedStorageIn)
         {
             var (imageStream, imagesPlayedStorage) = await GetNextBlobImage(msaToken, JsonConvert.DeserializeObject<ImagesPlayedStorage>(imagesPlayedStorageIn));
