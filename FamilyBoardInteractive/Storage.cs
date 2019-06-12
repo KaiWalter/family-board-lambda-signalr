@@ -28,10 +28,13 @@ namespace FamilyBoardInteractive
         /// <returns></returns>
         private static async Task CheckStorageConfiguration(CloudBlobContainer storageContainer, ILogger log)
         {
-            if (await storageContainer.CreateIfNotExistsAsync())
+            if (!await storageContainer.ExistsAsync())
             {
-                log.LogInformation($"creating container {Constants.BLOBPATHCONTAINER}");
-                await storageContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Off });
+                if (await storageContainer.CreateIfNotExistsAsync())
+                {
+                    log.LogInformation($"creating container {Constants.BLOBPATHCONTAINER}");
+                    await storageContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Off });
+                }
             }
 
             string blobName = Constants.BLOBPATHIMAGESPLAYED.Replace(Constants.BLOBPATHCONTAINER + "/", "");
