@@ -1,7 +1,5 @@
 # Family or Kitchen Board based on Azure Functions and SignalR
 
-> UNDER CONSTRUCTION
-
 Inspired by the board used in [a post from Scott Hanselman](https://www.hanselman.com/blog/HowToBuildAWallMountedFamilyCalendarAndDashboardWithARaspberryPiAndCheapMonitor.aspx), the web application in this project shows information
 
 - from a Google Calendar
@@ -9,6 +7,8 @@ Inspired by the board used in [a post from Scott Hanselman](https://www.hanselma
 - random images from OneDrive
 
 and is called from a browser on a Rasberry Pi W to display this information in a comprehensive board.
+
+> DISCLAIMER: Looking at the Azure consumption, this app cannot beat the pricing and flexible rendering capabilites of [Dakboard](https://dakboard.com) suggested in the post. It is merely a nice training exercise for me.
 
 ## Technologies used
 
@@ -21,7 +21,7 @@ and is called from a browser on a Rasberry Pi W to display this information in a
 
 Front-end is based on static pages which are hosted from Consumption Plan Azure Functions (class `StaticFileServer`).
 
-For basic protection `index.html` can only be opened with a Azure Functions key: `https://{function-app}.azurewebsites.net/index.html?code={key}`. All other static content is not protected.
+For basic protection `index.html` can only be opened with a Azure Functions key: `https://{function-app}.azurewebsites.net/index.html?code={function-key}`. All other static content is not protected.
 
 Functions back-end uses Azure SignalR services to communicate board (calendar and image) changes to the web front-end.
 
@@ -78,19 +78,44 @@ Access to Outlook Calendar, OneDrive and Google Calendar API is handled with OAu
 - only German weekdays from Monday to Sunday
 - public holidays for Germany, Baden-Württemberg
 
-## Setup
+## Setup runtime environment
 
-...
+> links valid as per June, 2019
 
-### Application settings
+1. setup Azure Function App in Consumption Plan and Runtime stack .NET with Application Insights
+1. setup Azure SignalR Services in Classic mode
+1. get connection string from SignalR Services > Keys and set application setting `AzureSignalRConnectionString` in Azure Functions App
+1. setup an application in [Microsoft Application Registration Portal](https://apps.dev.microsoft.com); create an application secret; add a web platform with redirect URI `https://{your-function-app-name}.azurewebsites.net/api/StoreMSAToken`; add Graph permissions `offline_access`, `User.Read`, `Calendars.Read` and `Files.Read.All`; set Functiop App settings `MSA_CLIENT_ID`, `MSA_CLIENT_SECRET` and `MSA_REDIRECT_URI` according to your settings made in Google APIs
+1. setup a project in [Google APIs](https://console.developers.google.com/apis); create an OAuth Client ID, for Web Application with redirect URI `https://{your-function-app-name}.azurewebsites.net/api/StoreGoogleToken`; add scope `../auth/calendar.events.readonly` on OAuth consent screen; set Functiop App settings `GOOGLE_CALENDAR_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `GOOGLE_REDIRECT_URI` according to your settings made in Google APIs
+1. set `ENCRYPTION_INITVECTOR` and `IMAGE_PASSPHRASE` Function App application settings to arbitrary string (e.g. from [random.org](https://www.random.org/strings/?num=2&len=20&digits=on&upperalpha=on&loweralpha=on&unique=on&format=html&rnd=new)) with about 15-20 digits in this regex pattern: `^[A-Za-z0-9]{15,20}$`
+1. set `ONEDRIVE_FOLDER` Function App application settings to a folder which is on the first level (root) of your OneDrive account
+1. initiate Google token generation with URI https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events.readonly&access_type=offline&prompt=consent&include_granted_scopes=true&state=state_parameter_passthrough_value&redirect_uri=https%3A%2F%2F{your-function-app-name}.azurewebsites.net%2Fapi%2FStoreGoogleToken&response_type=code&client_id={GOOGLE_CLIENT_ID}
+1. initiate Microsoft token generation with URI https://login.live.com/oauth20_authorize.srf?client_id={MSA_CLIENT_ID}&scope=offline_access%20files.read%20calendars.read&response_type=code&redirect_uri=https%3A%2F%2F{your-function-app-name}.azurewebsites.net%2Fapi%2FStoreMSAToken
+1. storage account (linked to Function App) should now contain 2 entries for RowKeys `Google` and `MSA` with the recent access tokens
+1. note `default` Function/Host key and start board with https://{your-function-app-name}.azurewebsites.net/index.html?code={function-key}
+1. check `exceptions` or `dependencies` in Application Insights or browser debugger console for errors
 
-These settings need to be set in the Azure Functions for the application to work properly:
+## Setup local environment
 
-| Appsetting | purpose | sample |
+> links valid as per June, 2019
+
+1. setup Azure Function App in Consumption Plan and Runtime stack .NET with Application Insights
+1. setup Azure SignalR Services in Classic mode
+1. execute steps 3. to 7. but use `http://localhost:7071/api/StoreGoogleToken` or `http://localhost:7071/api/StoreMSAToken` as redirect URIs and put all settings in `local.settings.json`
+1. initiate Google token generation with URI https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events.readonly&access_type=offline&prompt=consent&include_granted_scopes=true&state=state_parameter_passthrough_value&redirect_uri=http%3A%2F%2Flocalhost:7071%2Fapi%2FStoreGoogleToken&response_type=code&client_id={GOOGLE_CLIENT_ID}
+1. initiate Microsoft token generation with URI https://login.live.com/oauth20_authorize.srf?client_id={MSA_CLIENT_ID}&scope=offline_access%20files.read%20calendars.read&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A7071%2Fapi%2FStoreMSAToken
+1. development storage account should now contain 2 entries for RowKeys `Google` and `MSA` with the recent access tokens
+1. add `Host` value included in the `local.settings.json` sample below
+1. start board with http://localhost:7071/index.html
+1. check `exceptions` or `dependencies` in Application Insights or browser debugger console for errors
+
+## Application settings overview
+
+Additional to the common Azure Functions settings (`APPINSIGHTS_INSTRUMENTATIONKEY`, `AzureWebJobsStorage`, ...), these settings need to be set in the Azure Functions for the application to work properly:
+
+| App setting | purpose | sample |
 | ---- | ---- | ---- |
-| APPINSIGHTS_INSTRUMENTATIONKEY | Application Insights instrumentation key |
 | AzureSignalRConnectionString | Connection string used by SignalR binding to connect to SignalR service |
-| AzureWebJobsStorage | Connectiong string required by Azure Functions / Web Jobs host |
 | ENCRYPTION_INITVECTOR | Specifies a string used as an initial vector to encrypt the access key to the latest image provided by the ImageServer to the front-end (related to `IMAGE_PASSPHRASE`) |
 | GOOGLE_CALENDAR_ID | calender id accessed over Google Calendar API | `john.doe@gmail.com` |
 | GOOGLE_CLIENT_ID | client identifier for Google Calendar API OAuth2.0 access | `123456789012-abdefghijklmnopqrstuvwxyz01234567.apps.googleusercontent.com` |
@@ -101,3 +126,33 @@ These settings need to be set in the Azure Functions for the application to work
 | MSA_CLIENT_SECRET | client secret for Microsoft Calendar+OneDrive API OAuth2.0 access | `shajadsg@*saassashd` |
 | MSA_REDIRECT_URI | redirect URI on the `/api/StoreMSAToken` endpoint of this application defined in the Microsoft Calendar+OneDrive API OAuth2.0 access | `https://myfamilyboard.azurewebsites.net/api/StoreMSAToken` |
 | ONEDRIVE_FOLDER | folder in OneDrive account to pick images from | `familyboard` |
+
+## sample local.settings.json
+
+```json
+{
+  "IsEncrypted": false,
+  "Values": {
+    "APPINSIGHTS_INSTRUMENTATIONKEY": "{application-insights-instrumentation-key}",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "AzureSignalRConnectionString": "{signalr-connection-string}",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "CALENDAR_TIMEZONE": "Europe/Berlin",
+    "MSA_CLIENT_ID": "{msa-client-id-from-app-registration}",
+    "MSA_CLIENT_SECRET": "{msa-client-secret-from-app-registration}",
+    "MSA_REDIRECT_URI": "http://localhost:7071/api/StoreMSAToken",
+    "GOOGLE_CALENDAR_ID": "john.doe@gmail.com",
+    "GOOGLE_CLIENT_ID": "{google-client-id-from-api-console}",
+    "GOOGLE_CLIENT_SECRET": "{google-client-secret-from-api-console}",
+    "GOOGLE_REDIRECT_URI": "http://localhost:7071/api/StoreGoogleToken",
+    "ENCRYPTION_INITVECTOR": "TdnNMEKvUWzc2Re9R",
+    "IMAGE_PASSPHRASE": "LP0E3ED82rXjyES6w",
+    "ONEDRIVE_FOLDER": "familyboard"
+  },
+  "Host": {
+    "LocalHttpPort": 7071,
+    "CORS": "http://localhost:7071",
+    "CORSCredentials": true
+  }
+}
+```
