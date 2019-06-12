@@ -1,13 +1,9 @@
 ﻿using FamilyBoardInteractive.Models;
-using FamilyBoardInteractive.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.SignalRService;
-using Microsoft.WindowsAzure.Storage.Blob;
 using System;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace FamilyBoardInteractive
@@ -15,41 +11,42 @@ namespace FamilyBoardInteractive
     public static class SignalRHandler
     {
         private const string HUBNAME = "fb";
-        private const string QUEUEMESSAGEBOARDUPDATE = "boardUpdates";
         private const string SIGNALRMESSAGEUPDATECALENDER = "updateCalendar";
         private const string SIGNALRMESSAGEUPDATEIMAGE = "updateImage";
         private const string SIGNALRMESSAGE = "newMessage";
 
         [FunctionName("negotiate")]
-        public static SignalRConnectionInfo Negotiate(
+        public static async Task<SignalRConnectionInfo> Negotiate(
             [HttpTrigger(AuthorizationLevel.Anonymous)]HttpRequest req,
             [SignalRConnectionInfo(HubName = HUBNAME)]SignalRConnectionInfo connectionInfo,
-            [Queue(QUEUEMESSAGEBOARDUPDATE)]out string queueMessage)
+            [OrchestrationClient] DurableOrchestrationClient starter)
         {
-            queueMessage = "new client connection " + DateTime.UtcNow.ToString("u");
+            await starter.StartNewAsync(nameof(Flows.FullBoardUpdate), "new client connection " + DateTime.UtcNow.ToString("u"));
             return connectionInfo;
         }
 
-        [FunctionName(nameof(SendMessage))]
-        public static Task SendMessage(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post")] Message message,
+        [FunctionName(nameof(SendMessageActivity))]
+        public static Task SendMessageActivity(
+            [ActivityTrigger] DurableActivityContextBase context,
             [SignalR(HubName = HUBNAME)] IAsyncCollector<SignalRMessage> signalRMessages)
         {
             return signalRMessages.AddAsync(
                 new SignalRMessage
                 {
                     Target = SIGNALRMESSAGE,
-                    Arguments = new[] { message }
+                    Arguments = new[] { context.GetInput<Message>() }
                 });
         }
 
-        [FunctionName(nameof(UpdateCalendar))]
-        public static Task UpdateCalendar(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post")]object message,
-            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
-            [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
+
+        [FunctionName(nameof(UpdateCalendarActivity))]
+        public static Task UpdateCalendarActivity(
+                [ActivityTrigger] DurableActivityContextBase context,
+                [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
+                [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.GOOGLETOKEN_ROWKEY)] TokenEntity googleToken,
+                [SignalR(HubName = HUBNAME)] IAsyncCollector<SignalRMessage> signalRMessages)
         {
-            var events = CalendarServer.GetCalendars(msaToken).GetAwaiter().GetResult();
+            var events = CalendarServer.GetCalendars(msaToken, googleToken).GetAwaiter().GetResult();
 
             return signalRMessages.AddAsync(
                 new SignalRMessage
@@ -59,65 +56,17 @@ namespace FamilyBoardInteractive
                 });
         }
 
-        [FunctionName(nameof(QueuedBoardUpdate))]
-        [Singleton(Mode = SingletonMode.Listener)]
-        public static void QueuedBoardUpdate(
-            [QueueTrigger(QUEUEMESSAGEBOARDUPDATE)]string queueMessage,
-            [Queue(Constants.QUEUEMESSAGEUPDATECALENDER)]out string updateCalendarMessage,
-            [Queue(Constants.QUEUEMESSAGEPUSHIMAGE)]out string pushImageMessage,
-            [Queue(Constants.QUEUEMESSAGECONFIGURUATION)]out string configuration
-            )
-        {
-            updateCalendarMessage = configuration = pushImageMessage = queueMessage;
-
-        }
-
-        [FunctionName(nameof(QueuedCalendarUpdate))]
-        [Singleton(Mode = SingletonMode.Listener)]
-        public static Task QueuedCalendarUpdate(
-            [QueueTrigger(Constants.QUEUEMESSAGEUPDATECALENDER)]string queueMessage,
-            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
-            [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
-        {
-            var events = CalendarServer.GetCalendars(msaToken).GetAwaiter().GetResult();
-
-            return signalRMessages.AddAsync(
-                new SignalRMessage
-                {
-                    Target = SIGNALRMESSAGEUPDATECALENDER,
-                    Arguments = new[] { events }
-                });
-        }
-
-
-        [FunctionName(nameof(QueuedImageUpdate))]
-        [Singleton(Mode = SingletonMode.Listener)]
-        public static Task QueuedImageUpdate(
-            [QueueTrigger(Constants.QUEUEMESSAGEUPDATEIMAGE)]string queueMessage,
-            [SignalR(HubName = HUBNAME)]IAsyncCollector<SignalRMessage> signalRMessages)
+        [FunctionName(nameof(UpdateImageActivity))]
+        public static Task UpdateImageActivity(
+                [ActivityTrigger] DurableActivityContextBase context,
+                [SignalR(HubName = HUBNAME)] IAsyncCollector<SignalRMessage> signalRMessages)
         {
             return signalRMessages.AddAsync(
                 new SignalRMessage
                 {
                     Target = SIGNALRMESSAGEUPDATEIMAGE,
-                    Arguments = new[] { queueMessage }
+                    Arguments = new[] { context.GetInput<string>() }
                 });
-        }
-
-        [FunctionName(nameof(ScheduledCalendarUpdate))]
-        public static void ScheduledCalendarUpdate(
-            [TimerTrigger(Constants.SCHEDULEUPDATECALENDAR, RunOnStartup = false)]TimerInfo timer,
-            [Queue(Constants.QUEUEMESSAGEUPDATECALENDER)]out string updateCalendarMessage)
-        {
-            updateCalendarMessage = $"scheduled {DateTime.UtcNow.ToString("u")}";
-        }
-
-        [FunctionName(nameof(ScheduledImageUpdate))]
-        public static void ScheduledImageUpdate(
-            [TimerTrigger(Constants.SCHEDULEUPDATEIMAGE, RunOnStartup = false)]TimerInfo timer,
-            [Queue(Constants.QUEUEMESSAGEPUSHIMAGE)]out string pushImageMessage)
-        {
-            pushImageMessage = $"scheduled {DateTime.UtcNow.ToString("u")}";
         }
     }
 }

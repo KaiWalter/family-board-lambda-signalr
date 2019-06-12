@@ -11,12 +11,12 @@ namespace FamilyBoardInteractive
 {
     public class Storage
     {
-        [FunctionName(nameof(QueuedConfiguartionCheck))]
-        [Singleton(Mode = SingletonMode.Listener)]
-        public static async Task QueuedConfiguartionCheck(
-                [QueueTrigger(Constants.QUEUEMESSAGECONFIGURUATION)]string queueMessage,
+        [FunctionName(nameof(CheckConfigurationActivity))]
+        public static async Task CheckConfigurationActivity(
+                [ActivityTrigger] DurableActivityContextBase context,
                 [Blob(Constants.BLOBPATHCONTAINER, FileAccess.ReadWrite)] CloudBlobContainer storageContainer,
-                ILogger log)
+                ILogger log
+            )
         {
             await CheckStorageConfiguration(storageContainer, log);
         }
@@ -28,10 +28,13 @@ namespace FamilyBoardInteractive
         /// <returns></returns>
         private static async Task CheckStorageConfiguration(CloudBlobContainer storageContainer, ILogger log)
         {
-            if (await storageContainer.CreateIfNotExistsAsync())
+            if (!await storageContainer.ExistsAsync())
             {
-                log.LogInformation($"creating container {Constants.BLOBPATHCONTAINER}");
-                await storageContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Off });
+                if (await storageContainer.CreateIfNotExistsAsync())
+                {
+                    log.LogInformation($"creating container {Constants.BLOBPATHCONTAINER}");
+                    await storageContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Off });
+                }
             }
 
             string blobName = Constants.BLOBPATHIMAGESPLAYED.Replace(Constants.BLOBPATHCONTAINER + "/", "");

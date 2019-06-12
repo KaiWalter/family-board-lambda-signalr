@@ -4,7 +4,7 @@ using System;
 
 namespace FamilyBoardInteractive.Models
 {
-    public class MSAToken : TableEntity
+    public class TokenEntity : TableEntity
     {
         public DateTime Created { get; set; }
 
@@ -24,5 +24,14 @@ namespace FamilyBoardInteractive.Models
 
         [JsonProperty("user_id")]
         public string UserId { get; set; }
+
+        [JsonIgnore]
+        public bool NeedsRefresh
+        {
+            get
+            {
+                return DateTime.UtcNow > Expires.AddMinutes(-5);
+            }
+        }
     }
 }

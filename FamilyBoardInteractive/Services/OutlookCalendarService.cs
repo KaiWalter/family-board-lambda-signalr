@@ -12,11 +12,11 @@ namespace FamilyBoardInteractive.Services
     {
         const string OUTLOOKURL = "https://graph.microsoft.com/v1.0/me/calendar/calendarView?startDateTime={0}&endDateTime={1}&$select=subject,isAllDay,start,end";
 
-        MSAToken MSAToken;
+        TokenEntity MSAToken;
 
         string TimeZone;
 
-        public OutlookCalendarService(MSAToken msaToken, string timeZone = null)
+        public OutlookCalendarService(TokenEntity msaToken, string timeZone = null)
         {
             MSAToken = msaToken;
             TimeZone = timeZone ?? Constants.DEFAULT_TIMEZONE;

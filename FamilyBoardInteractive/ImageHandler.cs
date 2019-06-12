@@ -1,6 +1,5 @@
 using FamilyBoardInteractive.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
@@ -26,54 +25,24 @@ namespace FamilyBoardInteractive
 {
     public static class ImageHandler
     {
-        const string ONEDRIVEPATH = "https://graph.microsoft.com/v1.0/me/drive/root:/{0}:/children";
         private static readonly RNGCryptoServiceProvider Randomizer = new RNGCryptoServiceProvider();
 
-        [FunctionName(nameof(PushNextImage))]
-        public static async Task<IActionResult> PushNextImage(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
-            [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
-            [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
-                    [Blob(Constants.BLOBPATHIMAGESPLAYED, FileAccess.ReadWrite)] CloudBlockBlob imagesPlayedStorageBlob,
+        [FunctionName(nameof(RollImageActivity))]
+        public static async Task<string> RollImageActivity(
+            [ActivityTrigger] DurableActivityContextBase context,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity msaToken,
+            [Blob(Constants.BLOBPATHIMAGESPLAYED, FileAccess.ReadWrite)] CloudBlockBlob imagesPlayedStorageBlob,
             ILogger log)
         {
-            if (DateTime.UtcNow > msaToken.Expires) // token invalid
-            {
-                await refreshTokenMessage.AddAsync($"initiated by {nameof(PushNextImage)}");
-                return new StatusCodeResult(503);
-            }
-
             var imagesPlayedStorage = await imagesPlayedStorageBlob.DownloadTextAsync();
 
-            imagesPlayedStorage = await ProcessNextImage(msaToken, updateImageMessage, imagesPlayedStorage);
+            string updateImageMessage;
+
+            (imagesPlayedStorage, updateImageMessage) = await ProcessNextImage(msaToken, imagesPlayedStorage);
 
             await imagesPlayedStorageBlob.UploadTextAsync(imagesPlayedStorage);
 
-            return new OkResult();
-        }
-
-        [FunctionName(nameof(QueuedPushNextImage))]
-        [Singleton(Mode = SingletonMode.Listener)]
-        public static async Task QueuedPushNextImage(
-                    [QueueTrigger(Constants.QUEUEMESSAGEPUSHIMAGE)]string queueMessage,
-                    [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] MSAToken msaToken,
-                    [Queue(Constants.QUEUEMESSAGEREFRESHMSATOKEN)] IAsyncCollector<string> refreshTokenMessage,
-                    [Queue(Constants.QUEUEMESSAGEUPDATEIMAGE)] IAsyncCollector<string> updateImageMessage,
-                    [Blob(Constants.BLOBPATHIMAGESPLAYED, FileAccess.ReadWrite)] CloudBlockBlob imagesPlayedStorageBlob,
-                    ILogger log)
-        {
-            if (DateTime.UtcNow > msaToken.Expires) // token invalid
-            {
-                await refreshTokenMessage.AddAsync($"initiated by {nameof(QueuedPushNextImage)}");
-                return;
-            }
-
-            var imagesPlayedStorage = await imagesPlayedStorageBlob.DownloadTextAsync();
-
-            imagesPlayedStorage = await ProcessNextImage(msaToken, updateImageMessage, imagesPlayedStorage);
-
-            await imagesPlayedStorageBlob.UploadTextAsync(imagesPlayedStorage);
+            return updateImageMessage;
         }
 
         [FunctionName("ImageServer")]
@@ -105,7 +74,7 @@ namespace FamilyBoardInteractive
             }
         }
 
-        private static async Task<string> ProcessNextImage(MSAToken msaToken, IAsyncCollector<string> updateImageMessage, string imagesPlayedStorageIn)
+        private static async Task<(string,string)> ProcessNextImage(TokenEntity msaToken, string imagesPlayedStorageIn)
         {
             var (imageStream, imagesPlayedStorage) = await GetNextBlobImage(msaToken, JsonConvert.DeserializeObject<ImagesPlayedStorage>(imagesPlayedStorageIn));
 
@@ -125,19 +94,17 @@ namespace FamilyBoardInteractive
                 { "path", $"/api/ImageServer?key={HttpUtility.UrlEncode(key)}" }
             };
 
-            await updateImageMessage.AddAsync(imageObject.ToString());
-
-            return JsonConvert.SerializeObject(imagesPlayedStorage);
+            return (JsonConvert.SerializeObject(imagesPlayedStorage), imageObject.ToString());
         }
 
-        private static async Task<(Stream, ImagesPlayedStorage)> GetNextBlobImage(MSAToken msaToken, ImagesPlayedStorage imagesPlayedStorage)
+        private static async Task<(Stream, ImagesPlayedStorage)> GetNextBlobImage(TokenEntity msaToken, ImagesPlayedStorage imagesPlayedStorage)
         {
             Stream imageResult = null;
             ImagesPlayedStorage imagesPlayedStorageNew = null;
 
             using (var client = new HttpClient())
             {
-                var imageListRequest = new HttpRequestMessage(HttpMethod.Get, string.Format(ONEDRIVEPATH, "Dakboard"));
+                var imageListRequest = new HttpRequestMessage(HttpMethod.Get, string.Format(Constants.ONEDRIVEPATH, Util.GetEnvironmentVariable("ONEDRIVE_FOLDER")));
                 imageListRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(msaToken.TokenType, msaToken.AccessToken);
 
                 var imageListResponse = await client.SendAsync(imageListRequest);
@@ -146,17 +113,18 @@ namespace FamilyBoardInteractive
                     var imageListPayload = await imageListResponse.Content.ReadAsStringAsync();
                     var imageList = (JArray)JObject.Parse(imageListPayload)["value"];
 
+                    // merge list returned with images already played
                     imagesPlayedStorageNew = MergeImagesPlayed(imageList, imagesPlayedStorage);
 
-                    imagesPlayedStorageNew.ImagesPlayed = imagesPlayedStorageNew.ImagesPlayed.OrderBy(i => i.Count).ToList();
-
+                    // take image only from top 1/3rd
+                    imagesPlayedStorageNew.ImagesPlayed = imagesPlayedStorageNew.ImagesPlayed.OrderBy(i => i.Count).ThenBy(i => i.LastPlayed).ToList();
                     int upperBound = imagesPlayedStorageNew.ImagesPlayed.Count / 3;
                     if (upperBound > imagesPlayedStorageNew.ImagesPlayed.Count)
                     {
                         upperBound = imagesPlayedStorageNew.ImagesPlayed.Count;
                     }
 
-                    var randomImageIndex = Between(0, upperBound - 1);
+                    var randomImageIndex = RandomBetween(0, upperBound - 1);
 
                     var imagePath = imagesPlayedStorageNew.ImagesPlayed[randomImageIndex].ImageUrl;
 
@@ -168,12 +136,19 @@ namespace FamilyBoardInteractive
                     }
 
                     imagesPlayedStorageNew.ImagesPlayed[randomImageIndex].Count++;
+                    imagesPlayedStorageNew.ImagesPlayed[randomImageIndex].LastPlayed = DateTime.UtcNow;
                 }
             }
 
             return (imageResult, imagesPlayedStorageNew);
         }
 
+        /// <summary>
+        /// merge list returned with images already played
+        /// </summary>
+        /// <param name="imageList">list of images returned from service</param>
+        /// <param name="imagesPlayedStorage">storage of images already played</param>
+        /// <returns>merged list</returns>
         private static ImagesPlayedStorage MergeImagesPlayed(JArray imageList, ImagesPlayedStorage imagesPlayedStorage)
         {
             var imagesPlayedStorageResult = new ImagesPlayedStorage { ImagesPlayed = new List<ImagePlayed>() };
@@ -182,7 +157,7 @@ namespace FamilyBoardInteractive
             {
                 JObject imageObject = (JObject)imageToken;
 
-                if(imageObject["name"] == null || imageObject["@microsoft.graph.downloadUrl"] == null || imageObject["file"] == null)
+                if (imageObject["name"] == null || imageObject["@microsoft.graph.downloadUrl"] == null || imageObject["file"] == null)
                 {
 
                 }
@@ -197,7 +172,7 @@ namespace FamilyBoardInteractive
                     {
                         var imagePlayed = imagesPlayedStorage.ImagesPlayed.FirstOrDefault(i => i.ImageName == imageName);
 
-                        if(imagePlayed == null)
+                        if (imagePlayed == null)
                         {
                             imagePlayed = new ImagePlayed()
                             {
@@ -296,7 +271,7 @@ namespace FamilyBoardInteractive
         /// <param name="minimumValue"></param>
         /// <param name="maximumValue"></param>
         /// <returns></returns>
-        private static int Between(int minimumValue, int maximumValue)
+        private static int RandomBetween(int minimumValue, int maximumValue)
         {
             byte[] randomNumber = new byte[1];
 

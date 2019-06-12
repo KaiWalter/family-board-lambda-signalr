@@ -11,13 +11,13 @@ using System.Threading.Tasks;
 
 namespace FamilyBoardInteractive
 {
-    public static class MSATokenServer
+    public static class GoogleTokenServer
     {
-        [FunctionName(nameof(StoreMSAToken))]
+        [FunctionName(nameof(StoreGoogleToken))]
         [return: Table("Tokens")]
-        public static async Task<TokenEntity> StoreMSAToken(
+        public static async Task<TokenEntity> StoreGoogleToken(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
-            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity inputToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.GOOGLETOKEN_ROWKEY)] TokenEntity inputToken,
             ILogger log)
         {
             string code = req.Query["code"];
@@ -30,7 +30,7 @@ namespace FamilyBoardInteractive
             if (inputToken == null)
             {
                 outputToken.PartitionKey = Constants.TOKEN_PARTITIONKEY;
-                outputToken.RowKey = Constants.MSATOKEN_ROWKEY;
+                outputToken.RowKey = Constants.GOOGLETOKEN_ROWKEY;
             }
             else
             {
@@ -45,17 +45,17 @@ namespace FamilyBoardInteractive
             return outputToken;
         }
 
-        [FunctionName(nameof(RefreshMSATokenActivity))]
+        [FunctionName(nameof(RefreshGoogleTokenActivity))]
         [Singleton(Mode = SingletonMode.Listener)]
         [return: Table("Tokens")]
-        public static async Task<TokenEntity> RefreshMSATokenActivity(
+        public static async Task<TokenEntity> RefreshGoogleTokenActivity(
             [ActivityTrigger] DurableActivityContextBase context,
-            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.MSATOKEN_ROWKEY)] TokenEntity inputToken,
+            [Table(Constants.TOKEN_TABLE, partitionKey: Constants.TOKEN_PARTITIONKEY, rowKey: Constants.GOOGLETOKEN_ROWKEY)] TokenEntity inputToken,
             ILogger log)
         {
             if (inputToken?.RefreshToken == null)
             {
-                throw new ArgumentNullException($"{nameof(RefreshMSATokenActivity)} {nameof(inputToken.RefreshToken)}");
+                throw new ArgumentNullException($"{nameof(RefreshGoogleTokenActivity)} {nameof(inputToken.RefreshToken)}");
             }
 
             TokenEntity outputToken = null;
@@ -70,6 +70,7 @@ namespace FamilyBoardInteractive
                 outputToken.ETag = inputToken.ETag;
                 outputToken.PartitionKey = inputToken.PartitionKey;
                 outputToken.RowKey = inputToken.RowKey;
+                outputToken.RefreshToken = inputToken.RefreshToken; // Google RefreshToken can be re-used
                 outputToken.Created = tokenCreated;
                 outputToken.Expires = tokenCreated.AddSeconds(outputToken.ExpiresIn);
             }
@@ -84,18 +85,18 @@ namespace FamilyBoardInteractive
             using (var client = new HttpClient())
             {
                 Dictionary<string, string> formValues = new Dictionary<string, string>();
-                formValues.Add("client_id", Util.GetEnvironmentVariable("MSA_CLIENT_ID"));
-                formValues.Add("client_secret", Util.GetEnvironmentVariable("MSA_CLIENT_SECRET"));
                 formValues.Add("code", code);
+                formValues.Add("client_id", Util.GetEnvironmentVariable("GOOGLE_CLIENT_ID"));
+                formValues.Add("client_secret", Util.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET"));
+                formValues.Add("redirect_uri", Util.GetEnvironmentVariable("GOOGLE_REDIRECT_URI"));
                 formValues.Add("grant_type", "authorization_code");
-                formValues.Add("redirect_uri", Util.GetEnvironmentVariable("MSA_REDIRECT_URI"));
 
-                var tokenRequest = new HttpRequestMessage(HttpMethod.Post, Constants.MSA_TOKEN_URI)
+                var tokenRequest = new HttpRequestMessage(HttpMethod.Post, Constants.GOOGLE_TOKEN_URI)
                 {
                     Content = new FormUrlEncodedContent(formValues)
                 };
                 var tokenResponse = await client.SendAsync(tokenRequest);
-                if(tokenResponse.IsSuccessStatusCode)
+                if (tokenResponse.IsSuccessStatusCode)
                 {
                     result = await tokenResponse.Content.ReadAsStringAsync();
                 }
@@ -116,13 +117,13 @@ namespace FamilyBoardInteractive
             using (var client = new HttpClient())
             {
                 Dictionary<string, string> formValues = new Dictionary<string, string>();
-                formValues.Add("client_id", Util.GetEnvironmentVariable("MSA_CLIENT_ID"));
-                formValues.Add("client_secret", Util.GetEnvironmentVariable("MSA_CLIENT_SECRET"));
+                formValues.Add("client_id", Util.GetEnvironmentVariable("GOOGLE_CLIENT_ID"));
+                formValues.Add("client_secret", Util.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET"));
+                formValues.Add("redirect_uri", Util.GetEnvironmentVariable("GOOGLE_REDIRECT_URI"));
                 formValues.Add("refresh_token", refreshToken);
                 formValues.Add("grant_type", "refresh_token");
-                formValues.Add("redirect_uri", Util.GetEnvironmentVariable("MSA_REDIRECT_URI"));
 
-                var tokenRequest = new HttpRequestMessage(HttpMethod.Post, Constants.MSA_TOKEN_URI)
+                var tokenRequest = new HttpRequestMessage(HttpMethod.Post, Constants.GOOGLE_TOKEN_URI)
                 {
                     Content = new FormUrlEncodedContent(formValues)
                 };
@@ -140,6 +141,5 @@ namespace FamilyBoardInteractive
 
             return result;
         }
-
     }
 }

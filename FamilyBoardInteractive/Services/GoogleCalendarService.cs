@@ -1,21 +1,16 @@
-﻿using Google.Apis.Auth.OAuth2;
+﻿using FamilyBoardInteractive.Models;
+using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
 using System;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 namespace FamilyBoardInteractive.Services
 {
-    /// <summary>
-    /// store certificate to App Service
-    /// https://jan-v.nl/post/loading-certificates-with-azure-functions
-    /// </summary>
     public class GoogleCalendarService : ICalendarService
     {
-        static string[] Scopes = { CalendarService.Scope.CalendarReadonly };
         static string APPLICATION_NAME = "Family Board";
 
         string CalendarId;
@@ -23,23 +18,9 @@ namespace FamilyBoardInteractive.Services
 
         CalendarService service;
 
-        public GoogleCalendarService(string serviceAccount, string certificateThumbprint, string calendarId, string timeZone = null)
+        public GoogleCalendarService(TokenEntity googleToken, string calendarId, string timeZone = null)
         {
-            var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-            store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
-            var certificateCollection = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
-
-            if(certificateCollection.Count < 1)
-            {
-                throw new ApplicationException($"Google Service Account certificate with thumbprint {certificateThumbprint} not found.");
-            }
-
-            var certificate = certificateCollection[0];
-
-            var credential = new ServiceAccountCredential(new ServiceAccountCredential.Initializer(serviceAccount)
-            {
-                Scopes = Scopes
-            }.FromCertificate(certificate));
+            var credential = GoogleCredential.FromAccessToken(googleToken.AccessToken);
 
             service = new CalendarService(new BaseClientService.Initializer()
             {
