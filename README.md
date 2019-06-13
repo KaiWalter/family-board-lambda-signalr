@@ -80,7 +80,7 @@ To allow seamless and safe access from browser / front-end to band-end HTTP endp
 | ---- | ---- | ---- |
 | /api/negotiate | SignalR negotiation endpoint | none, AuthorizationLevel.Anonymous |
 | GET /index.html | HTTP endpoint for retrieving main page and hence initiating SignalR connection to back-end; proxied to `/api/ProtectedStaticFileServer?file=index.html` | Function key, AuthorizationLevel.Function |
-| GET /static/* | HTTP endpoint for retrieving `css` and `js`; proxied to `/api/StaticFileServer?file={path}` | none, AuthorizationLevel.Anonymous |
+| GET /static/* | HTTP endpoint for retrieving static content like _css_; proxied to `/api/StaticFileServer?file={path}` | none, AuthorizationLevel.Anonymous |
 | GET /favicon.ico | HTTP endpoint for retrieving `favicon.ico` (to reduce browser console error messages); proxied to `/api/StaticFileServer?file=favicon.ico` | none, AuthorizationLevel.Anonymous |
 | GET /api/ImageServer | HTTP endpoint for front-end to retrieve latest image when signaled from back-end | AuthorizationLevel.Anonymous; protected with a symetric encrypted key / expiration timestamp which back-end signals to front-end and which is only valid a limited time (1 minute) |
 | POST /api/UpdateCalendar | REST endpoint to force update of calendar content on the board | Function key, AuthorizationLevel.Function |
@@ -172,3 +172,7 @@ Additional to the common Azure Functions settings (`APPINSIGHTS_INSTRUMENTATIONK
   }
 }
 ```
+
+## Links
+
+- frequently check [a CDN for @aspnet/signalr updates](https://www.jsdelivr.com/package/npm/@aspnet/signalr)
