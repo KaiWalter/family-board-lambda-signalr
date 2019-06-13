@@ -79,14 +79,14 @@ To allow seamless and safe access from browser / front-end to band-end HTTP endp
 | endpoint | purpose | protection |
 | ---- | ---- | ---- |
 | /api/negotiate | SignalR negotiation endpoint | none, AuthorizationLevel.Anonymous |
-| POST /api/UpdateCalendar | REST endpoint to force update of calendar content on the board | Function key, AuthorizationLevel.Function |
-| POST /api/UpdateImage | REST endpoint to force update of image on the board | Function key, AuthorizationLevel.Function |
-| POST /api/SendMessage | REST endpoint to send a permanent message on the board; JSON body: {"Text":"_message text_" } | Function key, AuthorizationLevel.Function |
-| GET /api/Healt | REST endpoint to check health and API access tokens; can be used in CI/CD post deployment approval gates for checking deployment/health | Admin Function Key, AuthorizationLevel.Admin |
-| GET /api/ImageServer | HTTP endpoint for front-end to retrieve latest image when signaled from back-end | protected with a key / encrypted expiration timestamp which back-end signals to front-end and which is only valid a limited time (1 minute) |
 | GET /index.html | HTTP endpoint for retrieving main page and hence initiating SignalR connection to back-end; proxied to `/api/ProtectedStaticFileServer?file=index.html` | Function key, AuthorizationLevel.Function |
 | GET /static/* | HTTP endpoint for retrieving `css` and `js`; proxied to `/api/StaticFileServer?file={path}` | none, AuthorizationLevel.Anonymous |
 | GET /favicon.ico | HTTP endpoint for retrieving `favicon.ico` (to reduce browser console error messages); proxied to `/api/StaticFileServer?file=favicon.ico` | none, AuthorizationLevel.Anonymous |
+| GET /api/ImageServer | HTTP endpoint for front-end to retrieve latest image when signaled from back-end | AuthorizationLevel.Anonymous; protected with a symetric encrypted key / expiration timestamp which back-end signals to front-end and which is only valid a limited time (1 minute) |
+| POST /api/UpdateCalendar | REST endpoint to force update of calendar content on the board | Function key, AuthorizationLevel.Function |
+| POST /api/UpdateImage | REST endpoint to force update of image on the board | Function key, AuthorizationLevel.Function |
+| POST /api/SendMessage | REST endpoint to send a permanent message on the board; JSON body: {"Text":"_message text_" } | Function key, AuthorizationLevel.Function |
+| GET /api/Health | REST endpoint to check health and API access tokens; can be used in CI/CD post deployment approval gates for checking deployment/health | Admin Function Key, AuthorizationLevel.Admin |
 
 ## Limitations
 
