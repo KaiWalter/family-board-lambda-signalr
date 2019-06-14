@@ -4,9 +4,6 @@
     {
         internal const int CalendarWeeks = 3;
 
-        internal const string SCHEDULEUPDATECALENDAR = "0 */5 4-20 * * *";
-        internal const string SCHEDULEUPDATEIMAGE = "0 */1 4-22 * * *";
-
         internal const string BLOBPATHBOARDIMAGE = "images/boardimage.jpg";
         internal const string BLOBPATHCONTAINER = "familyboard";
         internal const string BLOBPATHIMAGESPLAYED = "familyboard/playedimages.json";

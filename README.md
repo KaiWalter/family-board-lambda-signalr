@@ -105,6 +105,7 @@ To allow seamless and safe access from browser / front-end to band-end HTTP endp
 1. setup a project in [Google APIs](https://console.developers.google.com/apis); create an OAuth Client ID, for Web Application with redirect URI `https://{your-function-app-name}.azurewebsites.net/api/StoreGoogleToken`; add scope `../auth/calendar.events.readonly` on OAuth consent screen; set Functiop App settings `GOOGLE_CALENDAR_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `GOOGLE_REDIRECT_URI` according to your settings made in Google APIs
 1. set `ENCRYPTION_INITVECTOR` and `IMAGE_PASSPHRASE` Function App application settings to arbitrary string (e.g. from [random.org](https://www.random.org/strings/?num=2&len=20&digits=on&upperalpha=on&loweralpha=on&unique=on&format=html&rnd=new)) with about 15-20 digits in this regex pattern: `^[A-Za-z0-9]{15,20}$`
 1. set `ONEDRIVE_FOLDER` Function App application settings to a folder which is on the first level (root) of your OneDrive account
+1. set `SCHEDULEUPDATECALENDAR` and `SCHEDULEUPDATEIMAGE` to desired schedules e.g. `0 */5 * * * *` and `0 */1 * * * *` to update calendar each 5 and image each minute
 1. initiate Google token generation with URI https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events.readonly&access_type=offline&prompt=consent&include_granted_scopes=true&state=state_parameter_passthrough_value&redirect_uri=https%3A%2F%2F{your-function-app-name}.azurewebsites.net%2Fapi%2FStoreGoogleToken&response_type=code&client_id={GOOGLE_CLIENT_ID}
 1. initiate Microsoft token generation with URI https://login.live.com/oauth20_authorize.srf?client_id={MSA_CLIENT_ID}&scope=offline_access%20files.read%20calendars.read&response_type=code&redirect_uri=https%3A%2F%2F{your-function-app-name}.azurewebsites.net%2Fapi%2FStoreMSAToken
 1. storage account (linked to Function App) should now contain 2 entries for RowKeys `Google` and `MSA` with the recent access tokens
@@ -117,7 +118,7 @@ To allow seamless and safe access from browser / front-end to band-end HTTP endp
 
 1. setup Azure Function App in Consumption Plan and Runtime stack .NET with Application Insights
 1. setup Azure SignalR Services in Classic mode
-1. execute steps 3. to 7. but use `http://localhost:7071/api/StoreGoogleToken` or `http://localhost:7071/api/StoreMSAToken` as redirect URIs and put all settings in `local.settings.json`
+1. execute steps 3. to 8. but use `http://localhost:7071/api/StoreGoogleToken` or `http://localhost:7071/api/StoreMSAToken` as redirect URIs and put all settings in `local.settings.json`
 1. initiate Google token generation with URI https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events.readonly&access_type=offline&prompt=consent&include_granted_scopes=true&state=state_parameter_passthrough_value&redirect_uri=http%3A%2F%2Flocalhost:7071%2Fapi%2FStoreGoogleToken&response_type=code&client_id={GOOGLE_CLIENT_ID}
 1. initiate Microsoft token generation with URI https://login.live.com/oauth20_authorize.srf?client_id={MSA_CLIENT_ID}&scope=offline_access%20files.read%20calendars.read&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A7071%2Fapi%2FStoreMSAToken
 1. development storage account should now contain 2 entries for RowKeys `Google` and `MSA` with the recent access tokens
@@ -142,6 +143,8 @@ Additional to the common Azure Functions settings (`APPINSIGHTS_INSTRUMENTATIONK
 | MSA_CLIENT_SECRET | client secret for Microsoft Calendar+OneDrive API OAuth2.0 access | `shajadsg@*saassashd` |
 | MSA_REDIRECT_URI | redirect URI on the `/api/StoreMSAToken` endpoint of this application defined in the Microsoft Calendar+OneDrive API OAuth2.0 access | `https://myfamilyboard.azurewebsites.net/api/StoreMSAToken` |
 | ONEDRIVE_FOLDER | folder in OneDrive account to pick images from | `familyboard` |
+| SCHEDULEUPDATECALENDAR | CRON expression for Timer Trigger - update schedule calendar | `0 */5 * * * *` |
+| SCHEDULEUPDATEIMAGE | CRON expression for Timer Trigger - update schedule image | `0 */1 * * * *` |
 
 ## sample local.settings.json
 
