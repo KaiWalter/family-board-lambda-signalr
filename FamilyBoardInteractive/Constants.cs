@@ -16,6 +16,9 @@
 
         internal const string DEFAULT_TIMEZONE = "Europe/Berlin";
 
+        internal const int IMAGES_PLAYED_CUTOFF = 10;
+        internal const int IMAGES_SELECTION_POOL_TOP_X_PERCENT = 20;
+
         internal const string GOOGLE_TOKEN_URI = "https://www.googleapis.com/oauth2/v4/token";
         internal const string MSA_TOKEN_URI = "https://login.live.com/oauth20_token.srf";
 

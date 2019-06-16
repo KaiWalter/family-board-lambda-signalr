@@ -63,7 +63,7 @@ namespace FamilyBoardInteractive
 
             try
             {
-                string tempFile = Path.Combine(Util.GetImagePath(), "image.png");
+                string tempFile = GetTempFile();
 
                 HttpResponseMessage response = StaticFileServer.ServeFile(tempFile, logger);
                 return response;
@@ -74,11 +74,16 @@ namespace FamilyBoardInteractive
             }
         }
 
-        private static async Task<(string,string)> ProcessNextImage(TokenEntity msaToken, string imagesPlayedStorageIn)
+        private static string GetTempFile()
+        {
+            return Path.Combine(Util.GetImagePath(), "image.png");
+        }
+
+        private static async Task<(string, string)> ProcessNextImage(TokenEntity msaToken, string imagesPlayedStorageIn)
         {
             var (imageStream, imagesPlayedStorage) = await GetNextBlobImage(msaToken, JsonConvert.DeserializeObject<ImagesPlayedStorage>(imagesPlayedStorageIn));
 
-            string tempFile = Path.Combine(Util.GetImagePath(), "image.png");
+            string tempFile = GetTempFile();
 
             using (FileStream fileOutputStream = new FileStream(tempFile, FileMode.Create))
             {
@@ -100,7 +105,7 @@ namespace FamilyBoardInteractive
         private static async Task<(Stream, ImagesPlayedStorage)> GetNextBlobImage(TokenEntity msaToken, ImagesPlayedStorage imagesPlayedStorage)
         {
             Stream imageResult = null;
-            ImagesPlayedStorage imagesPlayedStorageNew = null;
+            ImagesPlayedStorage imagesPlayedStorageReturned = null;
 
             using (var client = new HttpClient())
             {
@@ -114,33 +119,85 @@ namespace FamilyBoardInteractive
                     var imageList = (JArray)JObject.Parse(imageListPayload)["value"];
 
                     // merge list returned with images already played
-                    imagesPlayedStorageNew = MergeImagesPlayed(imageList, imagesPlayedStorage);
+                    var imagesPlayedStorageMerged = MergeImagesPlayed(imageList, imagesPlayedStorage);
 
-                    // take image only from top 1/3rd
-                    imagesPlayedStorageNew.ImagesPlayed = imagesPlayedStorageNew.ImagesPlayed.OrderBy(i => i.Count).ThenBy(i => i.LastPlayed).ToList();
-                    int upperBound = imagesPlayedStorageNew.ImagesPlayed.Count / 3;
-                    if (upperBound > imagesPlayedStorageNew.ImagesPlayed.Count)
-                    {
-                        upperBound = imagesPlayedStorageNew.ImagesPlayed.Count;
-                    }
+                    // sort ascending by count of played
+                    imagesPlayedStorageMerged.ImagesPlayed = imagesPlayedStorageMerged.ImagesPlayed.OrderBy(i => i.Count).ThenBy(i => i.LastPlayed).ToList();
 
-                    var randomImageIndex = RandomBetween(0, upperBound - 1);
+                    // balance image played counters
+                    var imagesPlayedStorageBalanced = BalanceImages(imagesPlayedStorageMerged);
 
-                    var imagePath = imagesPlayedStorageNew.ImagesPlayed[randomImageIndex].ImageUrl;
+                    // get random image
+                    var (imagePath, imagesPlayedStorageUpdated) = GetRandomImageUrl(imagesPlayedStorageBalanced);
 
-                    using (var webClient = new WebClient())
-                    {
-                        byte[] imageBytes = webClient.DownloadData(imagePath);
-                        imageBytes = TransformImage(imageBytes);
-                        imageResult = new MemoryStream(imageBytes);
-                    }
+                    imageResult = GetImageContent(imagePath);
 
-                    imagesPlayedStorageNew.ImagesPlayed[randomImageIndex].Count++;
-                    imagesPlayedStorageNew.ImagesPlayed[randomImageIndex].LastPlayed = DateTime.UtcNow;
+                    imagesPlayedStorageReturned = imagesPlayedStorageUpdated;
                 }
             }
 
-            return (imageResult, imagesPlayedStorageNew);
+            return (imageResult, imagesPlayedStorageReturned);
+        }
+
+        /// <summary>
+        /// Download and transform the image
+        /// </summary>
+        /// <param name="imagePath"></param>
+        /// <returns>image content as stream</returns>
+        private static Stream GetImageContent(string imagePath)
+        {
+            Stream imageResult;
+            using (var webClient = new WebClient())
+            {
+                byte[] imageBytes = webClient.DownloadData(imagePath);
+                imageBytes = TransformImage(imageBytes);
+                imageResult = new MemoryStream(imageBytes);
+            }
+
+            return imageResult;
+        }
+
+        /// <summary>
+        /// take image only from top x %
+        /// </summary>
+        /// <param name="imagesPlayedStorage">set of available images</param>
+        /// <returns>URL of image to be played and updated image storage</returns>
+        private static (string,ImagesPlayedStorage) GetRandomImageUrl(ImagesPlayedStorage imagesPlayedStorage)
+        {
+            int upperBound = ( imagesPlayedStorage.ImagesPlayed.Count * Constants.IMAGES_SELECTION_POOL_TOP_X_PERCENT) / 100;
+            if (upperBound > imagesPlayedStorage.ImagesPlayed.Count)
+            {
+                upperBound = imagesPlayedStorage.ImagesPlayed.Count;
+            }
+
+            var randomImageIndex = RandomBetween(0, upperBound - 1);
+            imagesPlayedStorage.ImagesPlayed[randomImageIndex].Count++;
+            imagesPlayedStorage.ImagesPlayed[randomImageIndex].LastPlayed = DateTime.UtcNow;
+
+            return (imagesPlayedStorage.ImagesPlayed[randomImageIndex].ImageUrl, imagesPlayedStorage);
+        }
+
+        /// <summary>
+        /// shave down image played counter when all images have been played x times,
+        /// so that new images do not need to be played so often played in order to 
+        /// be in balance with the existing set of images
+        /// </summary>
+        /// <param name="imagesPlayedStorage">set of available images</param>
+        /// <returns>balanced list</returns>
+        private static ImagesPlayedStorage BalanceImages(ImagesPlayedStorage imagesPlayedStorage)
+        {
+            if (imagesPlayedStorage.ImagesPlayed.Count > 0)
+            {
+                if (imagesPlayedStorage.ImagesPlayed[0].Count > Constants.IMAGES_PLAYED_CUTOFF)
+                {
+                    foreach (var ip in imagesPlayedStorage.ImagesPlayed)
+                    {
+                        ip.Count -= Constants.IMAGES_PLAYED_CUTOFF;
+                    }
+                }
+            }
+
+            return imagesPlayedStorage;
         }
 
         /// <summary>
@@ -194,6 +251,11 @@ namespace FamilyBoardInteractive
             return imagesPlayedStorageResult;
         }
 
+        /// <summary>
+        /// Rotate image
+        /// </summary>
+        /// <param name="imageInBytes">image content</param>
+        /// <returns>rotated image content</returns>
         private static byte[] TransformImage(byte[] imageInBytes)
         {
             using (var image = Image.Load(imageInBytes))
