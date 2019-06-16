@@ -102,6 +102,16 @@ namespace FamilyBoardInteractive
             return (JsonConvert.SerializeObject(imagesPlayedStorage), imageObject.ToString());
         }
 
+        /// <summary>
+        /// Determine the next image to be played
+        /// - download set of available images from OneDrive
+        /// - merge with the storage of images already played
+        /// - balance images played
+        /// - get next random image from top x % of available images
+        /// </summary>
+        /// <param name="msaToken">OneDrive access token</param>
+        /// <param name="imagesPlayedStorage">storage of images already played</param>
+        /// <returns>stream with image content and updated storage of images already played</returns>
         private static async Task<(Stream, ImagesPlayedStorage)> GetNextBlobImage(TokenEntity msaToken, ImagesPlayedStorage imagesPlayedStorage)
         {
             Stream imageResult = null;
@@ -158,12 +168,13 @@ namespace FamilyBoardInteractive
         }
 
         /// <summary>
-        /// take image only from top x %
+        /// Determine URL of next random image to by played
         /// </summary>
         /// <param name="imagesPlayedStorage">set of available images</param>
         /// <returns>URL of image to be played and updated image storage</returns>
         private static (string,ImagesPlayedStorage) GetRandomImageUrl(ImagesPlayedStorage imagesPlayedStorage)
         {
+            // take image only from top x %
             int upperBound = ( imagesPlayedStorage.ImagesPlayed.Count * Constants.IMAGES_SELECTION_POOL_TOP_X_PERCENT) / 100;
             if (upperBound > imagesPlayedStorage.ImagesPlayed.Count)
             {
@@ -179,8 +190,9 @@ namespace FamilyBoardInteractive
 
         /// <summary>
         /// shave down image played counter when all images have been played x times,
-        /// so that new images do not need to be played so often played in order to 
-        /// be in balance with the existing set of images
+        /// (before new images are added)
+        /// so that new images do not need to be played so often 
+        /// to be in balance with the previous set of images
         /// </summary>
         /// <param name="imagesPlayedStorage">set of available images</param>
         /// <returns>balanced list</returns>
