@@ -135,7 +135,7 @@ namespace FamilyBoardInteractive
                     imagesPlayedStorageMerged.ImagesPlayed = imagesPlayedStorageMerged.ImagesPlayed.OrderBy(i => i.Count).ThenBy(i => i.LastPlayed).ToList();
 
                     // balance image played counters
-                    var imagesPlayedStorageBalanced = BalanceImages(imagesPlayedStorageMerged);
+                    var imagesPlayedStorageBalanced = PlateauImages(imagesPlayedStorageMerged);
 
                     // get random image
                     var (imagePath, imagesPlayedStorageUpdated) = GetRandomImageUrl(imagesPlayedStorageBalanced);
@@ -189,22 +189,23 @@ namespace FamilyBoardInteractive
         }
 
         /// <summary>
-        /// shave down image played counter when all images have been played x times,
-        /// (before new images are added)
+        /// plateau handling: cut down image played counter when all images have been played x times,
         /// so that new images do not need to be played so often 
-        /// to be in balance with the previous set of images
+        /// before these plateau with the existing / old images
         /// </summary>
-        /// <param name="imagesPlayedStorage">set of available images</param>
+        /// <param name="imagesPlayedStorage">sorted (by counter) set of available images</param>
         /// <returns>balanced list</returns>
-        private static ImagesPlayedStorage BalanceImages(ImagesPlayedStorage imagesPlayedStorage)
+        private static ImagesPlayedStorage PlateauImages(ImagesPlayedStorage imagesPlayedStorage)
         {
             if (imagesPlayedStorage.ImagesPlayed.Count > 0)
             {
-                if (imagesPlayedStorage.ImagesPlayed[0].Count > Constants.IMAGES_PLAYED_CUTOFF)
+                // when in the sorted set of images the first image reaches the plateau, assume
+                // all other images on that plateau
+                if (imagesPlayedStorage.ImagesPlayed[0].Count > Constants.IMAGES_PLAYED_PLATEAU)
                 {
                     foreach (var ip in imagesPlayedStorage.ImagesPlayed)
                     {
-                        ip.Count -= Constants.IMAGES_PLAYED_CUTOFF;
+                        ip.Count -= Constants.IMAGES_PLAYED_PLATEAU;
                     }
                 }
             }
