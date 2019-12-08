@@ -81,7 +81,7 @@ namespace FamilyBoardInteractive
 
         private static async Task<(string, string)> ProcessNextImage(TokenEntity msaToken, string imagesPlayedStorageIn)
         {
-            var (imageStream, imagesPlayedStorage) = await GetNextBlobImage(msaToken, JsonConvert.DeserializeObject<ImagesPlayedStorage>(imagesPlayedStorageIn));
+            var (imageStream, imageCreated, imagesPlayedStorage) = await GetNextBlobImage(msaToken, JsonConvert.DeserializeObject<ImagesPlayedStorage>(imagesPlayedStorageIn));
 
             string tempFile = GetTempFile();
 
@@ -96,7 +96,9 @@ namespace FamilyBoardInteractive
 
             var imageObject = new JObject()
             {
-                { "path", $"/api/ImageServer?key={HttpUtility.UrlEncode(key)}" }
+                { "path", $"/api/ImageServer?key={HttpUtility.UrlEncode(key)}" },
+                { "createdYear", imageCreated.Year },
+                { "createdMonth", imageCreated.Month }
             };
 
             return (JsonConvert.SerializeObject(imagesPlayedStorage), imageObject.ToString());
@@ -112,10 +114,11 @@ namespace FamilyBoardInteractive
         /// <param name="msaToken">OneDrive access token</param>
         /// <param name="imagesPlayedStorage">storage of images already played</param>
         /// <returns>stream with image content and updated storage of images already played</returns>
-        private static async Task<(Stream, ImagesPlayedStorage)> GetNextBlobImage(TokenEntity msaToken, ImagesPlayedStorage imagesPlayedStorage)
+        private static async Task<(Stream, DateTime, ImagesPlayedStorage)> GetNextBlobImage(TokenEntity msaToken, ImagesPlayedStorage imagesPlayedStorage)
         {
             Stream imageResult = null;
             ImagesPlayedStorage imagesPlayedStorageReturned = null;
+            DateTime imageCreatedResult = DateTime.MinValue;
 
             using (var client = new HttpClient())
             {
@@ -138,15 +141,16 @@ namespace FamilyBoardInteractive
                     var imagesPlayedStorageBalanced = PlateauImages(imagesPlayedStorageMerged);
 
                     // get random image
-                    var (imagePath, imagesPlayedStorageUpdated) = GetRandomImageUrl(imagesPlayedStorageBalanced);
+                    var (imagePath, imageCreated, imagesPlayedStorageUpdated) = GetRandomImageUrl(imagesPlayedStorageBalanced);
 
                     imageResult = GetImageContent(imagePath);
+                    imageCreatedResult = imageCreated;
 
                     imagesPlayedStorageReturned = imagesPlayedStorageUpdated;
                 }
             }
 
-            return (imageResult, imagesPlayedStorageReturned);
+            return (imageResult, imageCreatedResult, imagesPlayedStorageReturned);
         }
 
         /// <summary>
@@ -172,7 +176,7 @@ namespace FamilyBoardInteractive
         /// </summary>
         /// <param name="imagesPlayedStorage">set of available images</param>
         /// <returns>URL of image to be played and updated image storage</returns>
-        private static (string,ImagesPlayedStorage) GetRandomImageUrl(ImagesPlayedStorage imagesPlayedStorage)
+        private static (string,DateTime,ImagesPlayedStorage) GetRandomImageUrl(ImagesPlayedStorage imagesPlayedStorage)
         {
             // take image only from top x %
             int upperBound = ( imagesPlayedStorage.ImagesPlayed.Count * Constants.IMAGES_SELECTION_POOL_TOP_X_PERCENT) / 100;
@@ -185,7 +189,7 @@ namespace FamilyBoardInteractive
             imagesPlayedStorage.ImagesPlayed[randomImageIndex].Count++;
             imagesPlayedStorage.ImagesPlayed[randomImageIndex].LastPlayed = DateTime.UtcNow;
 
-            return (imagesPlayedStorage.ImagesPlayed[randomImageIndex].ImageUrl, imagesPlayedStorage);
+            return (imagesPlayedStorage.ImagesPlayed[randomImageIndex].ImageUrl, imagesPlayedStorage.ImagesPlayed[randomImageIndex].Created, imagesPlayedStorage);
         }
 
         /// <summary>
@@ -236,6 +240,8 @@ namespace FamilyBoardInteractive
                     var imageName = imageObject["name"].Value<string>();
                     var imagePath = imageObject["@microsoft.graph.downloadUrl"].Value<string>();
                     var imageFile = (JObject)imageObject["file"];
+                    var imagePhotoData = (JObject)imageObject["photo"];
+                    var imageCreated = imagePhotoData["takenDateTime"].Value<DateTime>();
                     var imageMimeType = imageFile["mimeType"].Value<string>();
 
                     if (imageMimeType.CompareTo("image/jpeg") == 0)
@@ -248,12 +254,14 @@ namespace FamilyBoardInteractive
                             {
                                 ImageName = imageName,
                                 ImageUrl = imagePath,
-                                Count = 0
+                                Count = 0,
+                                Created = imageCreated
                             };
                         }
                         else
                         {
                             imagePlayed.ImageUrl = imagePath;
+                            imagePlayed.Created = imageCreated;
                         }
 
                         imagesPlayedStorageResult.ImagesPlayed.Add(imagePlayed);

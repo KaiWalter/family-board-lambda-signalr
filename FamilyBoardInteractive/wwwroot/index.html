@@ -226,7 +226,9 @@
                     });
                 });
 
-                putMessage("image updated", 2);
+                $(".imageCreated").html(imageObj.createdYear + "-" + imageObj.createdMonth);
+
+                putMessage("image updated - " + monthNames[imageObj.createdMonth-1] + " " + imageObj.createdYear, 15);
             }
         });
     </script>

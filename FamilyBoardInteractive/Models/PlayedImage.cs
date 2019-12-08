@@ -10,6 +10,7 @@ namespace FamilyBoardInteractive.Models
         public string ImageUrl { get; set; }
         public int Count { get; set; }
 
+        public DateTime Created { get; set; }
         public DateTime LastPlayed { get; set; }
     }
 }
