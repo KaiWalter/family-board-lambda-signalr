@@ -26,6 +26,12 @@ namespace FamilyBoardInteractive
 
             var token = await AccessTokenFromCode(code, log);
 
+            if (string.IsNullOrEmpty(token))
+            {
+                log.LogError("Google token is invalid");
+                return null;
+            }
+
             var outputToken = JsonConvert.DeserializeObject<TokenEntity>(token);
             if (inputToken == null)
             {
