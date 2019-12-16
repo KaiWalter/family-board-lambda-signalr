@@ -37,6 +37,12 @@ body {
         top: -1em;
     }
 
+.imageCreated {
+    color: white;
+    margin-left: 10px;
+    font-size: 0.4em;
+}
+
 .calendar {
     display: grid;
     grid-template-columns: 1fr repeat(7, 3fr);

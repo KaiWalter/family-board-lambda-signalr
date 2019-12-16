@@ -19,8 +19,9 @@
 
     <div class="board">
 
-        <div id="imageContainer" style="overflow: hidden;">
+        <div id="imageContainer" style="height:100%; position:relative; overflow: hidden;">
             <div class="clock"></div>
+            <div style="height:5%; position:absolute; bottom:0px;"><span class="imageCreated"></span> </div>
         </div>
 
         <div class="main">
@@ -224,9 +225,14 @@
                         backgroundSize: "cover",
                         backgroundRepeat: "no-repeat"
                     });
+                    var imageCreatedLabel = "";
+                    if (imageObj.createdMonth && imageObj.createdYear) {
+                        imageCreatedLabel = monthNames[imageObj.createdMonth - 1] + " " + imageObj.createdYear;
+                    }
+                    $(".imageCreated").html(imageCreatedLabel);
                 });
 
-                putMessage("image updated", 2);
+                putMessage("image updated");
             }
         });
     </script>
