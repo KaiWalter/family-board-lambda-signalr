@@ -231,40 +231,46 @@ namespace FamilyBoardInteractive
             {
                 JObject imageObject = (JObject)imageToken;
 
-                if (imageObject["name"] == null || imageObject["@microsoft.graph.downloadUrl"] == null || imageObject["file"] == null)
+                if (imageObject["name"] != null && imageObject["@microsoft.graph.downloadUrl"] != null && imageObject["file"] != null && imageObject["photo"] != null)
                 {
-
-                }
-                else
-                {
-                    var imageName = imageObject["name"].Value<string>();
-                    var imagePath = imageObject["@microsoft.graph.downloadUrl"].Value<string>();
-                    var imageFile = (JObject)imageObject["file"];
-                    var imagePhotoData = (JObject)imageObject["photo"];
-                    var imageCreated = imagePhotoData["takenDateTime"].Value<DateTime>();
-                    var imageMimeType = imageFile["mimeType"].Value<string>();
-
-                    if (imageMimeType.CompareTo("image/jpeg") == 0)
+                    try
                     {
-                        var imagePlayed = imagesPlayedStorage.ImagesPlayed.FirstOrDefault(i => i.ImageName == imageName);
-
-                        if (imagePlayed == null)
+                        var imageName = imageObject["name"].Value<string>();
+                        var imagePath = imageObject["@microsoft.graph.downloadUrl"].Value<string>();
+                        var imageFile = (JObject)imageObject["file"];
+                        if(imageObject["photo"].HasValues)
                         {
-                            imagePlayed = new ImagePlayed()
+                            var imagePhotoData = (JObject)imageObject["photo"];
+                            var imageCreated = imagePhotoData["takenDateTime"].Value<DateTime>();
+                            var imageMimeType = imageFile["mimeType"].Value<string>();
+
+                            if (imageMimeType.CompareTo("image/jpeg") == 0)
                             {
-                                ImageName = imageName,
-                                ImageUrl = imagePath,
-                                Count = 0,
-                                Created = imageCreated
-                            };
-                        }
-                        else
-                        {
-                            imagePlayed.ImageUrl = imagePath;
-                            imagePlayed.Created = imageCreated;
-                        }
+                                var imagePlayed = imagesPlayedStorage.ImagesPlayed.FirstOrDefault(i => i.ImageName == imageName);
 
-                        imagesPlayedStorageResult.ImagesPlayed.Add(imagePlayed);
+                                if (imagePlayed == null)
+                                {
+                                    imagePlayed = new ImagePlayed()
+                                    {
+                                        ImageName = imageName,
+                                        ImageUrl = imagePath,
+                                        Count = 0,
+                                        Created = imageCreated
+                                    };
+                                }
+                                else
+                                {
+                                    imagePlayed.ImageUrl = imagePath;
+                                    imagePlayed.Created = imageCreated;
+                                }
+
+                                imagesPlayedStorageResult.ImagesPlayed.Add(imagePlayed);
+                            }
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        throw new ApplicationException($"Exception on processing image {imageToken.ToString()}");
                     }
                 }
             }
