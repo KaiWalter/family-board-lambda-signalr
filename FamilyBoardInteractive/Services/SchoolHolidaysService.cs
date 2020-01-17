@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using FamilyBoardInteractive.Models;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 
 namespace FamilyBoardInteractive.Services
@@ -19,11 +20,11 @@ namespace FamilyBoardInteractive.Services
 
         }
 
-        public async Task<List<CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate, bool isPrimary = false, bool isSecondary = false)
+        public async Task<List<CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate, ILogger logger = null, bool isPrimary = false, bool isSecondary = false)
         {
             var result = new List<CalendarEntry>();
 
-            result.AddRange(await GetHolidaysForYear(startDate, endDate, startDate.Year));
+            result.AddRange(await GetHolidaysForYear(startDate, endDate, startDate.Year, logger));
 
             return result;
         }
@@ -37,20 +38,20 @@ namespace FamilyBoardInteractive.Services
             return result;
         }
 
-        private static async Task<List<CalendarEntry>> GetHolidaysForYear(DateTime startDate, DateTime endDate, int year)
+        private static async Task<List<CalendarEntry>> GetHolidaysForYear(DateTime startDate, DateTime endDate, int year, ILogger logger = null)
         {
             var startDateISO = startDate.ToString("s", System.Globalization.CultureInfo.InvariantCulture).Substring(0, 10);
             var endDateISO = endDate.ToString("s", System.Globalization.CultureInfo.InvariantCulture).Substring(0, 10);
 
             var yearResult = new List<CalendarEntry>();
 
-            using (var client = new HttpClient())
+            try
             {
-                var holidayRequest = new HttpRequestMessage(HttpMethod.Get, SCHOOLHOLIDAYSURL);
-                var holidayResponse = await client.SendAsync(holidayRequest);
-                if (holidayResponse.IsSuccessStatusCode)
+                using (var client = new HttpClient())
                 {
-                    try
+                    var holidayRequest = new HttpRequestMessage(HttpMethod.Get, SCHOOLHOLIDAYSURL);
+                    var holidayResponse = await client.SendAsync(holidayRequest);
+                    if (holidayResponse.IsSuccessStatusCode)
                     {
                         var holidaysPayload = await holidayResponse.Content.ReadAsStringAsync();
                         var holidaysData = JObject.Parse(holidaysPayload);
@@ -73,14 +74,14 @@ namespace FamilyBoardInteractive.Services
                                         duration.CompareTo(new TimeSpan(0)) > 0)
                                     {
                                         var date = startsOn;
-                                        while(date <= endsOn)
+                                        while (date <= endsOn)
                                         {
                                             yearResult.Add(new CalendarEntry()
                                             {
                                                 AllDayEvent = true,
                                                 SchoolHoliday = true,
                                                 Date = date.ToString("u").Substring(0, 10),
-                                                Description = holiday["name"].Value<string>().Replace("Himmelfahrt","Pfingsten")
+                                                Description = holiday["name"].Value<string>().Replace("Himmelfahrt", "Pfingsten")
                                             });
                                             date = date.AddDays(1);
                                         }
@@ -90,11 +91,11 @@ namespace FamilyBoardInteractive.Services
                         }
 
                     }
-                    catch (Exception ex)
-                    {
-                        throw ex;
-                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex, "Error in GetHolidaysForYear");
             }
 
             return yearResult.GroupBy(x => x.Date).Select(y => y.First()).ToList<CalendarEntry>();

@@ -1,5 +1,6 @@
 ﻿using FamilyBoardInteractive.Models;
 using FamilyBoardInteractive.Services;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,7 +9,8 @@ namespace FamilyBoardInteractive
 {
     public static class CalendarServer
     {
-        public static async Task<System.Collections.Generic.List<Models.CalendarEntry>> GetCalendars(TokenEntity msaToken, TokenEntity googleToken)
+        public static async Task<System.Collections.Generic.List<Models.CalendarEntry>> GetCalendars(TokenEntity msaToken, TokenEntity googleToken,
+            ILogger logger)
         {
             var start = DateTime.Now.Date.AddDays(-7);
             var end = DateTime.Now.Date.AddDays(Constants.CalendarWeeks * 7);
@@ -20,10 +22,10 @@ namespace FamilyBoardInteractive
 
                 // combine public and school holidays
                 var publicHolidaysService = new PublicHolidaysService();
-                //var schoolHolidaysService = new SchoolHolidaysService();
+                var schoolHolidaysService = new SchoolHolidaysService();
 
                 holidays.AddRange(await publicHolidaysService.GetEvents(start, end));
-                //holidays.AddRange(await schoolHolidaysService.GetEvents(start, end));
+                holidays.AddRange(await schoolHolidaysService.GetEvents(start, end, logger));
                 var deduplicatedHolidays = holidays.GroupBy(x => x.Date).Select(y => y.First()).ToList<CalendarEntry>();
                 events.AddRange(deduplicatedHolidays);
 
