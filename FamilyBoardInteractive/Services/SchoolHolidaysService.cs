@@ -13,7 +13,7 @@ namespace FamilyBoardInteractive.Services
 {
     public class SchoolHolidaysService : ICalendarService
     {
-        const string SCHOOLHOLIDAYSURL = "https://www.mehr-schulferien.de/api/v1.0/periods";
+        const string SCHOOLHOLIDAYSURL = "https://ferien-api.de/api/v1/holidays/BW";
 
         public SchoolHolidaysService()
         {
@@ -54,38 +54,31 @@ namespace FamilyBoardInteractive.Services
                     if (holidayResponse.IsSuccessStatusCode)
                     {
                         var holidaysPayload = await holidayResponse.Content.ReadAsStringAsync();
-                        var holidaysData = JObject.Parse(holidaysPayload);
-                        var holidays = (JArray)holidaysData["data"];
+                        var holidays = JArray.Parse(holidaysPayload);
 
                         foreach (var holiday in holidays)
                         {
-                            var stateId = holiday["federal_state_id"];
-                            if (stateId.Type != JTokenType.Null)
+                            var startsOn = holiday["start"].Value<DateTime>();
+                            var endsOn = holiday["end"].Value<DateTime>();
+                            var name = holiday["name"].Value<string>();
+
+                            var duration = endsOn - startsOn;
+
+                            if (startsOn.CompareTo(endDate) <= 0 && endsOn.CompareTo(startDate) >= 0 &&
+                                duration.CompareTo(new TimeSpan(0)) > 0 && 
+                                name.Length > 1)
                             {
-                                if (holiday["federal_state_id"].Value<int>() == 1)
+                                var date = startsOn;
+                                while (date <= endsOn)
                                 {
-                                    var startsOn = holiday["starts_on"].Value<DateTime>();
-                                    var endsOn = holiday["ends_on"].Value<DateTime>();
-                                    var name = holiday["name"].Value<string>();
-
-                                    var duration = endsOn - startsOn;
-
-                                    if (startsOn.CompareTo(endDate) <= 0 && endsOn.CompareTo(startDate) >= 0 &&
-                                        duration.CompareTo(new TimeSpan(0)) > 0)
+                                    yearResult.Add(new CalendarEntry()
                                     {
-                                        var date = startsOn;
-                                        while (date <= endsOn)
-                                        {
-                                            yearResult.Add(new CalendarEntry()
-                                            {
-                                                AllDayEvent = true,
-                                                SchoolHoliday = true,
-                                                Date = date.ToString("u").Substring(0, 10),
-                                                Description = holiday["name"].Value<string>().Replace("Himmelfahrt", "Pfingsten")
-                                            });
-                                            date = date.AddDays(1);
-                                        }
-                                    }
+                                        AllDayEvent = true,
+                                        SchoolHoliday = true,
+                                        Date = date.ToString("u").Substring(0, 10),
+                                        Description = name.Substring(0, 1).ToUpper() + name.Substring(1)
+                                    }); ;
+                                    date = date.AddDays(1);
                                 }
                             }
                         }
