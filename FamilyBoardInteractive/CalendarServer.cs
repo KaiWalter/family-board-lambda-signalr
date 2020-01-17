@@ -20,10 +20,10 @@ namespace FamilyBoardInteractive
 
                 // combine public and school holidays
                 var publicHolidaysService = new PublicHolidaysService();
-                var schoolHolidaysService = new SchoolHolidaysService();
+                //var schoolHolidaysService = new SchoolHolidaysService();
 
                 holidays.AddRange(await publicHolidaysService.GetEvents(start, end));
-                holidays.AddRange(await schoolHolidaysService.GetEvents(start, end));
+                //holidays.AddRange(await schoolHolidaysService.GetEvents(start, end));
                 var deduplicatedHolidays = holidays.GroupBy(x => x.Date).Select(y => y.First()).ToList<CalendarEntry>();
                 events.AddRange(deduplicatedHolidays);
 
