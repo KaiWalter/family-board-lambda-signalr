@@ -17,7 +17,7 @@ steps:
     ren FamilyBoardInteractive\proxies.server.json proxies.json
   displayName: activate proxies.json server version
 
-- task: DotNetCoreInstaller@0
+- task: DotNetCoreInstaller@2
   inputs:
     packageType: 'sdk'
     version: $(netCoreSdk)
