@@ -6,9 +6,6 @@ trigger:
   - feature/*
   - bug/*
 
-pool:
-  vmImage: "windows-2019"
-
 stages:
   - stage: build
     displayName: Build
@@ -18,6 +15,8 @@ stages:
     jobs:
       - job: build
         displayName: build and publish artifact
+        pool:
+          vmImage: windows-latest
         steps:
           - template: azure-pipelines/build.yml
 
@@ -30,6 +29,7 @@ stages:
       - template: azure-pipelines/deploy.yml
         parameters:
           environment: TEST
+          agentImage: ubuntu-latest
 
   - stage: deploy_prod
     displayName: deploy to PROD
@@ -40,3 +40,4 @@ stages:
       - template: azure-pipelines/deploy.yml
         parameters:
           environment: PROD
+          agentImage: ubuntu-latest
