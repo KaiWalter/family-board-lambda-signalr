@@ -58,7 +58,7 @@ stages:
     displayName: deploy to TEST
     dependsOn: build
     variables:
-      - group: TEST
+      - group: 'TEST'
     jobs:
       - deployment: TEST
         displayName: deploy to TEST
@@ -71,14 +71,14 @@ stages:
                 artifact: drop
               - task: AzureWebApp@1
                 inputs:
-                  azureSubscription: '$[Deploy.Subscription]'
-                  appName: '$[Deploy.FunctionApp]'
+                  azureSubscription: $[Deploy.Subscription]
+                  appName: $[Deploy.FunctionApp]
 
   - stage: deploy_prod
     displayName: deploy to PROD
     dependsOn: deploy_test
     variables:
-      - group: PROD
+      - group: 'PROD'
     jobs:
       - deployment: PROD
         displayName: deploy to TEST
@@ -91,5 +91,5 @@ stages:
                 artifact: drop
               - task: AzureWebApp@1
                 inputs:
-                  azureSubscription: '$[Deploy.Subscription]'
-                  appName: '$[Deploy.FunctionApp]'
+                  azureSubscription: $[Deploy.Subscription]
+                  appName: $[Deploy.FunctionApp]
