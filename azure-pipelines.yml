@@ -58,9 +58,30 @@ stages:
     dependsOn: build
     jobs:
       - deployment: TEST
+        displayName: deploy to TEST
         pool:
           vmImage: "windows-2019"
         environment: TEST
+        variables:
+          - group: TEST
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - download: current
+                artifact: drop
+
+  - stage: deploy_prod
+    displayName: deploy to PROD
+    dependsOn: build
+    jobs:
+      - deployment: PROD
+        displayName: deploy to PROD
+        pool:
+          vmImage: "windows-2019"
+        environment: PROD
+        variables:
+          - group: PROD
         strategy:
           runOnce:
             deploy:
