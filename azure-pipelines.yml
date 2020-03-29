@@ -61,7 +61,7 @@ stages:
       - group: TEST
     jobs:
       - deployment: TEST
-        displayName: deploy to TEST
+        displayName: 'deploy to TEST $(Deploy.FunctionApp)'
         environment: TEST
         strategy:
           runOnce:
@@ -71,8 +71,8 @@ stages:
                 artifact: drop
               - task: AzureWebApp@1
                 inputs:
-                  azureSubscription: '$(Subscription)'
-                  appName: '$(FunctionApp)'
+                  azureSubscription: '$(Deploy.Subscription)'
+                  appName: '$(Deploy.FunctionApp)'
 
   - stage: deploy_prod
     displayName: deploy to PROD
@@ -81,7 +81,7 @@ stages:
       - group: PROD
     jobs:
       - deployment: PROD
-        displayName: deploy to PROD
+        displayName: 'deploy to TEST $(Deploy.FunctionApp)'
         environment: PROD
         strategy:
           runOnce:
@@ -91,5 +91,5 @@ stages:
                 artifact: drop
               - task: AzureWebApp@1
                 inputs:
-                  azureSubscription: '$(Subscription)'
-                  appName: '$(FunctionApp)'
+                  azureSubscription: '$(Deploy.Subscription)'
+                  appName: '$(Deploy.FunctionApp)'
