@@ -11,7 +11,3 @@ jobs:
           steps:
             - download: current
               artifact: drop
-            - task: AzureWebApp@1
-              inputs:
-                azureSubscription: '$(Deploy.Subscription)'
-                appName: '$(Deploy.FunctionApp)'
