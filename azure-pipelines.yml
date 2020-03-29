@@ -1,48 +1,43 @@
+name: $(Date:yyyyMMdd)-$(Rev:r)
+
 trigger:
-- master
-- dev
-- feature/*
-- bug/*
+  - master
+  - dev
+  - feature/*
+  - bug/*
 
-pool:
-  vmImage: 'windows-2019'
+stages:
+  - stage: build
+    displayName: Build
+    variables:
+      buildConfiguration: 'Release'
+      netCoreSdk: '2.2.203'
+    jobs:
+      - job: build
+        displayName: build and publish artifact
+        pool:
+          vmImage: windows-latest
+        workspace:
+          clean: all
+        steps:
+          - template: azure-pipelines/build.yml
 
-variables:
-  buildConfiguration: 'Release'
-  netCoreSdk: '2.2.203'
+  - stage: deploy_test
+    displayName: deploy to TEST
+    dependsOn: build
+    variables:
+      - group: 'Test-Deployment'
+    jobs:
+      - template: azure-pipelines/deploy.yml
+        parameters:
+          environment: TEST
 
-steps:
-- script: |
-    del FamilyBoardInteractive\proxies.json /q
-    ren FamilyBoardInteractive\proxies.server.json proxies.json
-  displayName: activate proxies.json server version
-
-- task: DotNetCoreInstaller@2
-  inputs:
-    packageType: 'sdk'
-    version: $(netCoreSdk)
-
-- task: DotNetCoreCLI@2
-  displayName: 'dotnet restore'
-  inputs:
-    command: restore
-    projects: '*.sln'
-
-- task: DotNetCoreCLI@2
-  displayName: 'dotnet build'
-  inputs:
-    command: build
-    projects: '*.sln'
-
-- task: DotNetCoreCLI@2
-  displayName: 'dotnet publish'
-  inputs:
-    command: publish
-    publishWebProjects: True
-    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-    zipAfterPublish: True
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathtoPublish: '$(Build.ArtifactStagingDirectory)' 
-    artifactName: 'drop'
+  - stage: deploy_prod
+    displayName: deploy to PROD
+    dependsOn: deploy_test
+    variables:
+      - group: 'Production-Deployment'
+    jobs:
+      - template: azure-pipelines/deploy.yml
+        parameters:
+          environment: PROD

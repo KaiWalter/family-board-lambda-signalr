@@ -1,0 +1,21 @@
+parameters:
+  environment: ''
+  agentImage: 'ubuntu-latest'
+
+jobs:
+  - deployment: ${{ parameters.environment }}
+    displayName: deploy to ${{ parameters.environment }}
+    environment: ${{ parameters.environment }}
+    pool:
+      vmImage: ${{ parameters.agentImage }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - download: current
+              artifact: drop
+            - task: AzureWebApp@1
+              inputs:
+                azureSubscription: 'Y1WLE-Lambda-SignalR-Board'
+                appName: '$(board.functionapp)'
+                package: $(Pipeline.Workspace)/**/*.zip  
