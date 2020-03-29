@@ -1,10 +1,12 @@
 parameters:
   environment: ''
   agentImage: 'windows-latest'
+  functionApp: ''
+  subscription: ''
 
 jobs:
   - deployment: ${{ parameters.environment }}
-    displayName: deploy to ${{ parameters.environment }} $(board.functionapp)
+    displayName: deploy to ${{ parameters.environment }} ${{ parameters.functionApp }}
     environment: ${{ parameters.environment }}
     pool:
       vmImage: ${{ parameters.agentImage }}
@@ -16,5 +18,5 @@ jobs:
               artifact: drop
             - task: AzureWebApp@1
               inputs:
-                azureSubscription: $(board.subscription)
-                appName: $(board.functionapp)
+                azureSubscription: '${{ parameters.subscription }}'
+                appName: '${{ parameters.functionApp }}'

@@ -30,6 +30,8 @@ stages:
         parameters:
           environment: TEST
           agentImage: ubuntu-latest
+          functionApp: $(board.functionapp)
+          subscription: $(board.subscription)
 
   - stage: deploy_prod
     displayName: deploy to PROD
@@ -41,3 +43,5 @@ stages:
         parameters:
           environment: PROD
           agentImage: ubuntu-latest
+          functionApp: $(board.functionapp)
+          subscription: $(board.subscription)
