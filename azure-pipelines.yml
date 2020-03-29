@@ -69,10 +69,6 @@ stages:
               steps:
               - download: current
                 artifact: drop
-              - task: AzureWebApp@1
-                inputs:
-                  azureSubscription: '$(Deploy.Subscription)'
-                  appName: '$(Deploy.FunctionApp)'
 
   - stage: deploy_prod
     displayName: deploy to PROD
@@ -89,7 +85,3 @@ stages:
               steps:
               - download: current
                 artifact: drop
-              - task: AzureWebApp@1
-                inputs:
-                  azureSubscription: '$(Deploy.Subscription)'
-                  appName: '$(Deploy.FunctionApp)'
