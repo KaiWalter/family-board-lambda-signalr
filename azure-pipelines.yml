@@ -4,6 +4,9 @@ trigger:
   - feature/*
   - bug/*
 
+pool:
+  vmImage: "windows-2019"
+
 variables:
   buildConfiguration: "Release"
   netCoreSdk: "2.2.203"
@@ -11,8 +14,6 @@ variables:
 stages:
   - stage: build
     displayName: Build
-    pool:
-      vmImage: "windows-2019"
     jobs:
       - job: build
         displayName: build and publish artifact
@@ -56,14 +57,12 @@ stages:
   - stage: deploy_test
     displayName: deploy to TEST
     dependsOn: build
+    variables:
+      - group: TEST
     jobs:
       - deployment: TEST
         displayName: deploy to TEST
-        pool:
-          vmImage: "windows-2019"
         environment: TEST
-        variables:
-          - group: TEST
         strategy:
           runOnce:
             deploy:
@@ -78,14 +77,12 @@ stages:
   - stage: deploy_prod
     displayName: deploy to PROD
     dependsOn: deploy_test
+    variables:
+      - group: PROD
     jobs:
       - deployment: PROD
         displayName: deploy to PROD
-        pool:
-          vmImage: "windows-2019"
         environment: PROD
-        variables:
-          - group: PROD
         strategy:
           runOnce:
             deploy:
