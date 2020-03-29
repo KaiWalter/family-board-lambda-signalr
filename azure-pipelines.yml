@@ -56,10 +56,10 @@ stages:
     displayName: deploy to TEST
     dependsOn: build
     jobs:
-      - deployment: ${{ $parameter.environment }}
+      - deployment: TEST
         pool:
           vmImage: "windows-2019"
-        environment: ${{ $parameter.environment }}
+        environment: TEST
         strategy:
           runOnce:
             deploy:
