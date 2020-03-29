@@ -1,5 +1,5 @@
 parameters:
-  environment: ""
+  environment: ''
 
 jobs:
   - deployment: ${{ parameters.environment }}
