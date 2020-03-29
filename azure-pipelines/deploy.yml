@@ -14,7 +14,7 @@ jobs:
           steps:
             - download: current
               artifact: drop
-              - task: AzureWebApp@1
-                inputs:
-                  azureSubscription: 'Y1WLE-Lambda-SignalR-Board'
-                  appName: '$(board.functionapp)'
+            - task: AzureWebApp@1
+              inputs:
+                azureSubscription: 'Y1WLE-Lambda-SignalR-Board'
+                appName: '$(board.functionapp)'
