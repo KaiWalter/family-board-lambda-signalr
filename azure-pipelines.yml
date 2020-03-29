@@ -7,18 +7,17 @@ trigger:
 pool:
   vmImage: "windows-2019"
 
-variables:
-  buildConfiguration: "Release"
-  netCoreSdk: "2.2.203"
-
 stages:
   - stage: build
     displayName: Build
+    variables:
+      buildConfiguration: 'Release'
+      netCoreSdk: '2.2.203'
     jobs:
       - job: build
         displayName: build and publish artifact
         steps:
-          - template: azure-piplelines/build.yml
+          - template: azure-pipleines/build.yml
 
   - stage: deploy_test
     displayName: deploy to TEST
@@ -26,7 +25,7 @@ stages:
     variables:
       - group: TEST
     jobs:
-      - template: azure-piplelines/deploy.yml
+      - template: azure-pipelines/deploy.yml
         parameters:
           environment: TEST
 
@@ -36,6 +35,6 @@ stages:
     variables:
       - group: PROD
     jobs:
-      - template: azure-piplelines/deploy.yml
+      - template: azure-pipelines/deploy.yml
         parameters:
           environment: PROD
