@@ -17,79 +17,25 @@ stages:
     jobs:
       - job: build
         displayName: build and publish artifact
-
         steps:
-          - script: |
-              del FamilyBoardInteractive\proxies.json /q
-              ren FamilyBoardInteractive\proxies.server.json proxies.json
-            displayName: activate proxies.json server version
-
-          - task: DotNetCoreInstaller@2
-            inputs:
-              packageType: "sdk"
-              version: $(netCoreSdk)
-
-          - task: DotNetCoreCLI@2
-            displayName: "dotnet restore"
-            inputs:
-              command: restore
-              projects: "*.sln"
-
-          - task: DotNetCoreCLI@2
-            displayName: "dotnet build"
-            inputs:
-              command: build
-              projects: "*.sln"
-
-          - task: DotNetCoreCLI@2
-            displayName: "dotnet publish"
-            inputs:
-              command: publish
-              publishWebProjects: True
-              arguments: "--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)"
-              zipAfterPublish: True
-
-          - task: PublishBuildArtifacts@1
-            inputs:
-              pathtoPublish: "$(Build.ArtifactStagingDirectory)"
-              artifactName: "drop"
+          - template: azure-piplelines/build.yml
 
   - stage: deploy_test
     displayName: deploy to TEST
     dependsOn: build
     variables:
-      - group: 'TEST'
+      - group: TEST
     jobs:
-      - deployment: TEST
-        displayName: deploy to TEST
-        environment: TEST
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-              - download: current
-                artifact: drop
-              - task: AzureWebApp@1
-                inputs:
-                  azureSubscription: $[Deploy.Subscription]
-                  appName: $[Deploy.FunctionApp]
+      - template: azure-piplelines/deploy.yml
+        parameters:
+          environment: TEST
 
   - stage: deploy_prod
     displayName: deploy to PROD
     dependsOn: deploy_test
     variables:
-      - group: 'PROD'
+      - group: PROD
     jobs:
-      - deployment: PROD
-        displayName: deploy to TEST
-        environment: PROD
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-              - download: current
-                artifact: drop
-              - task: AzureWebApp@1
-                inputs:
-                  azureSubscription: $[Deploy.Subscription]
-                  appName: $[Deploy.FunctionApp]
+      - template: azure-piplelines/deploy.yml
+        parameters:
+          environment: PROD
