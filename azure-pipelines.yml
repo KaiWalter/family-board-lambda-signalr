@@ -25,7 +25,7 @@ stages:
     displayName: deploy to TEST
     dependsOn: build
     variables:
-      - group: TEST
+      - group: 'Test-Deployment'
     jobs:
       - template: azure-pipelines/deploy.yml
         parameters:
@@ -35,7 +35,7 @@ stages:
     displayName: deploy to PROD
     dependsOn: deploy_test
     variables:
-      - group: PROD
+      - group: 'Production-Deployment'
     jobs:
       - template: azure-pipelines/deploy.yml
         parameters:
