@@ -17,7 +17,7 @@ stages:
       - job: build
         displayName: build and publish artifact
         steps:
-          - template: azure-pipleines/build.yml
+          - template: azure-pipelines/build.yml
 
   - stage: deploy_test
     displayName: deploy to TEST
