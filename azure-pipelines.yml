@@ -62,7 +62,7 @@ stages:
         environment: ${{ $parameter.environment }}
         strategy:
           runOnce:
-            display:
+            deploy:
               steps:
               - download: current
                 artifact: drop
