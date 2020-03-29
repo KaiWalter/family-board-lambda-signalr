@@ -6,7 +6,7 @@ parameters:
 
 jobs:
   - deployment: ${{ parameters.environment }}
-    displayName: deploy to ${{ parameters.environment }} ${{ parameters.functionApp }}
+    displayName: deploy to ${{ parameters.environment }} ${{ parameters.functionApp }}  ${{ parameters.subscription }}
     environment: ${{ parameters.environment }}
     pool:
       vmImage: ${{ parameters.agentImage }}
@@ -16,7 +16,3 @@ jobs:
           steps:
             - download: current
               artifact: drop
-            - task: AzureWebApp@1
-              inputs:
-                azureSubscription: '${{ parameters.subscription }}'
-                appName: '${{ parameters.functionApp }}'

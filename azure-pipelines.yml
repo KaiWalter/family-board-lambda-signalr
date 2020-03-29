@@ -17,6 +17,8 @@ stages:
         displayName: build and publish artifact
         pool:
           vmImage: windows-latest
+        workspace:
+          clean: all
         steps:
           - template: azure-pipelines/build.yml
 
@@ -25,8 +27,6 @@ stages:
     dependsOn: build
     variables:
       - group: 'Test-Deployment'
-      - name: board.subscription
-        value: 'DUMMY'
     jobs:
       - template: azure-pipelines/deploy.yml
         parameters:
