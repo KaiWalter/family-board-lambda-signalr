@@ -52,7 +52,7 @@ stages:
               pathtoPublish: "$(Build.ArtifactStagingDirectory)"
               artifactName: "drop"
 
-  - stage: deploy TEST
+  - stage: deploy_test
     displayName: deploy to TEST
     dependsOn: build
     jobs:
