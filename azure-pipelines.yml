@@ -1,48 +1,68 @@
 trigger:
-- master
-- dev
-- feature/*
-- bug/*
-
-pool:
-  vmImage: 'windows-2019'
+  - master
+  - dev
+  - feature/*
+  - bug/*
 
 variables:
-  buildConfiguration: 'Release'
-  netCoreSdk: '2.2.203'
+  buildConfiguration: "Release"
+  netCoreSdk: "2.2.203"
 
-steps:
-- script: |
-    del FamilyBoardInteractive\proxies.json /q
-    ren FamilyBoardInteractive\proxies.server.json proxies.json
-  displayName: activate proxies.json server version
+stages:
+  - stage: build
+    displayName: Build
+    pool:
+      vmImage: "windows-2019"
+    jobs:
+      - job: build and publish
 
-- task: DotNetCoreInstaller@2
-  inputs:
-    packageType: 'sdk'
-    version: $(netCoreSdk)
+        steps:
+          - script: |
+              del FamilyBoardInteractive\proxies.json /q
+              ren FamilyBoardInteractive\proxies.server.json proxies.json
+            displayName: activate proxies.json server version
 
-- task: DotNetCoreCLI@2
-  displayName: 'dotnet restore'
-  inputs:
-    command: restore
-    projects: '*.sln'
+          - task: DotNetCoreInstaller@2
+            inputs:
+              packageType: "sdk"
+              version: $(netCoreSdk)
 
-- task: DotNetCoreCLI@2
-  displayName: 'dotnet build'
-  inputs:
-    command: build
-    projects: '*.sln'
+          - task: DotNetCoreCLI@2
+            displayName: "dotnet restore"
+            inputs:
+              command: restore
+              projects: "*.sln"
 
-- task: DotNetCoreCLI@2
-  displayName: 'dotnet publish'
-  inputs:
-    command: publish
-    publishWebProjects: True
-    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-    zipAfterPublish: True
+          - task: DotNetCoreCLI@2
+            displayName: "dotnet build"
+            inputs:
+              command: build
+              projects: "*.sln"
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathtoPublish: '$(Build.ArtifactStagingDirectory)' 
-    artifactName: 'drop'
+          - task: DotNetCoreCLI@2
+            displayName: "dotnet publish"
+            inputs:
+              command: publish
+              publishWebProjects: True
+              arguments: "--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)"
+              zipAfterPublish: True
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathtoPublish: "$(Build.ArtifactStagingDirectory)"
+              artifactName: "drop"
+
+  - stage: deploy TEST
+    displayName: deploy to TEST
+    dependsOn: build
+    jobs:
+      - deployment: ${{ $parameter.environment }}
+        pool:
+          vmImage: "windows-2019"
+        environment: ${{ $parameter.environment }}
+        strategy:
+          runOnce:
+            display:
+              steps:
+              - download: current
+                artifact: drop
