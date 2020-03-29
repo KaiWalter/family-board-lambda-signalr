@@ -3,7 +3,7 @@ parameters:
 
 jobs:
   - deployment: ${{ parameters.environment }}
-    displayName: deploy to ${{ parameters.environment }} $(variables.board.functionapp)
+    displayName: deploy to ${{ parameters.environment }} $(board.functionapp)
     environment: ${{ parameters.environment }}
     strategy:
       runOnce:
@@ -13,5 +13,5 @@ jobs:
               artifact: drop
             - task: AzureWebApp@1
               inputs:
-                azureSubscription: $(variables.board.subscription)
-                appName: $(variables.board.functionapp)
+                azureSubscription: $(board.subscription)
+                appName: $(board.functionapp)
