@@ -6,9 +6,6 @@ trigger:
   - feature/*
   - bug/*
 
-pool:
-  vmImage: "windows-2019"
-
 stages:
   - stage: build
     displayName: Build
@@ -18,6 +15,10 @@ stages:
     jobs:
       - job: build
         displayName: build and publish artifact
+        pool:
+          vmImage: windows-latest
+        workspace:
+          clean: all
         steps:
           - template: azure-pipelines/build.yml
 
