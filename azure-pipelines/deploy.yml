@@ -4,7 +4,7 @@ parameters:
 
 jobs:
   - deployment: ${{ parameters.environment }}
-    displayName: deploy to ${{ parameters.environment }} $(board.subscription) $(board.functionapp)
+    displayName: deploy to ${{ parameters.environment }}
     environment: ${{ parameters.environment }}
     pool:
       vmImage: ${{ parameters.agentImage }}
@@ -14,5 +14,7 @@ jobs:
           steps:
             - download: current
               artifact: drop
-            - script: echo $(board.functionapp)
-            - script: echo $(board.subscription)
+              - task: AzureWebApp@1
+                inputs:
+                  azureSubscription: 'Y1WLE-Lambda-SignalR-Board'
+                  appName: '$(board.functionapp)'
