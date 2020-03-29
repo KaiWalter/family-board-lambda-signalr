@@ -2,9 +2,9 @@ parameters:
   environment: ""
 
 jobs:
-  - deployment: ${{ parameter.environment }}
-    displayName: deploy to ${{ parameter.environment }}
-    environment: ${{ parameter.environment }}
+  - deployment: ${{ parameters.environment }}
+    displayName: deploy to ${{ parameters.environment }} $(Deploy.FunctionApp)
+    environment: ${{ parameters.environment }}
     strategy:
       runOnce:
         deploy:
