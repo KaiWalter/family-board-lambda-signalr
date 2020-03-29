@@ -1,12 +1,10 @@
 parameters:
   environment: ''
-  agentImage: 'windows-latest'
-  functionApp: ''
-  subscription: ''
+  agentImage: 'ubuntu-latest'
 
 jobs:
   - deployment: ${{ parameters.environment }}
-    displayName: deploy to ${{ parameters.environment }} ${{ parameters.functionApp }}  ${{ parameters.subscription }}
+    displayName: deploy to ${{ parameters.environment }} $(board.subscription) $(board.functionapp)
     environment: ${{ parameters.environment }}
     pool:
       vmImage: ${{ parameters.agentImage }}
@@ -16,3 +14,5 @@ jobs:
           steps:
             - download: current
               artifact: drop
+            - script: echo $(board.functionapp)
+            - script: echo $(board.subscription)
