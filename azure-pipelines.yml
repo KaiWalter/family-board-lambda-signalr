@@ -25,6 +25,8 @@ stages:
     dependsOn: build
     variables:
       - group: 'Test-Deployment'
+      - name: board.subscription
+        value 'DUMMY'
     jobs:
       - template: azure-pipelines/deploy.yml
         parameters:
