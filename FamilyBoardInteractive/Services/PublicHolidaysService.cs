@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using FamilyBoardInteractive.Models;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 
 namespace FamilyBoardInteractive.Services
@@ -18,7 +19,7 @@ namespace FamilyBoardInteractive.Services
         }
 
 
-        public async Task<List<CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate, bool isPrimary = false, bool isSecondary = false)
+        public async Task<List<CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate, ILogger logger = null, bool isPrimary = false, bool isSecondary = false)
         {
             if ((endDate.Year - startDate.Year) > 1)
             {

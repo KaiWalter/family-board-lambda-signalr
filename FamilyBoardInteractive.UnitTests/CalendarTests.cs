@@ -128,7 +128,7 @@ namespace FamilyBoardInteractive.UnitTests
 
             // assert
             Assert.IsNotNull(result);
-            Assert.AreEqual(13, result.Count);
+            Assert.AreEqual(14, result.Count);
         }
 
         [Test]
@@ -144,7 +144,7 @@ namespace FamilyBoardInteractive.UnitTests
 
             // assert
             Assert.IsNotNull(result);
-            Assert.AreEqual(11, result.Count);
+            Assert.AreEqual(12, result.Count);
         }
     }
 }

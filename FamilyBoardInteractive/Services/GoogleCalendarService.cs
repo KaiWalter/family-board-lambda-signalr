@@ -3,6 +3,7 @@ using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -32,7 +33,7 @@ namespace FamilyBoardInteractive.Services
             TimeZone = timeZone ?? Constants.DEFAULT_TIMEZONE;
         }
 
-        public async Task<List<Models.CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate, bool isPrimary = false, bool isSecondary = false)
+        public async Task<List<Models.CalendarEntry>> GetEvents(DateTime startDate, DateTime endDate, ILogger logger = null, bool isPrimary = false, bool isSecondary = false)
         {
             List<Models.CalendarEntry> eventResults = new List<Models.CalendarEntry>();
 
