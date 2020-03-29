@@ -13,5 +13,5 @@ jobs:
               artifact: drop
             - task: AzureWebApp@1
               inputs:
-                azureSubscription: $(Deploy.Subscription)
-                appName: $(Deploy.FunctionApp)
+                azureSubscription: '$(Deploy.Subscription)'
+                appName: '$(Deploy.FunctionApp)'
