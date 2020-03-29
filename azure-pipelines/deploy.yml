@@ -1,0 +1,17 @@
+parameters:
+  environment: ''
+
+jobs:
+  - deployment: ${{ parameters.environment }}
+    displayName: deploy to ${{ parameters.environment }} $(board.functionapp)
+    environment: ${{ parameters.environment }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - download: current
+              artifact: drop
+            - task: AzureWebApp@1
+              inputs:
+                azureSubscription: $(board.subscription)
+                appName: $(board.functionapp)
