@@ -18,4 +18,4 @@ jobs:
               inputs:
                 azureSubscription: 'Y1WLE-Lambda-SignalR-Board'
                 appName: '$(board.functionapp)'
-                package: $(System.ArtifactsDirectory)/**/*.zip  
+                package: $(Pipeline.Workspace)/**/*.zip  
