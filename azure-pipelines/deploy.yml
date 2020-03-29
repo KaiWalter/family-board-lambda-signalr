@@ -1,5 +1,5 @@
 parameters:
-  environment: ""
+  environment: ''
 
 jobs:
   - deployment: ${{ parameters.environment }}
@@ -13,5 +13,5 @@ jobs:
               artifact: drop
             - task: AzureWebApp@1
               inputs:
-                azureSubscription: "$(board.subscription)"
-                appName: "$(board.functionapp)"
+                azureSubscription: '$(board.subscription)'
+                appName: '$(board.functionapp)'
