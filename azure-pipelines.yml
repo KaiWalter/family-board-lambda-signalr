@@ -72,8 +72,8 @@ stages:
                 artifact: drop
               - task: AzureWebApp@1
                 inputs:
-                  azureSubscription: $(Subscription)
-                  appName: $(FunctionApp)
+                  azureSubscription: '$(Subscription)'
+                  appName: '$(FunctionApp)'
 
   - stage: deploy_prod
     displayName: deploy to PROD
@@ -94,5 +94,5 @@ stages:
                 artifact: drop
               - task: AzureWebApp@1
                 inputs:
-                  azureSubscription: $(Subscription)
-                  appName: $(FunctionApp)
+                  azureSubscription: '$(Subscription)'
+                  appName: '$(FunctionApp)'
