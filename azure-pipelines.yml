@@ -70,10 +70,14 @@ stages:
               steps:
               - download: current
                 artifact: drop
+              - task: AzureWebApp@1
+                inputs:
+                  azureSubscription: $(Subscription)
+                  appName: $(FunctionApp)
 
   - stage: deploy_prod
     displayName: deploy to PROD
-    dependsOn: build
+    dependsOn: deploy_test
     jobs:
       - deployment: PROD
         displayName: deploy to PROD
@@ -88,3 +92,7 @@ stages:
               steps:
               - download: current
                 artifact: drop
+              - task: AzureWebApp@1
+                inputs:
+                  azureSubscription: $(Subscription)
+                  appName: $(FunctionApp)
